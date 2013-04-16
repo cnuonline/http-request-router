@@ -10,15 +10,17 @@ from the ground up.
 To use:
 
 Create a Maven style WAR file project and add this project as a Maven dependency.
-
+```xml
 <dependency>
 	<groupId>com.doitnext</groupId>
 	<artifactId>http-request-router</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 </dependency>
+```
 
 In your WAR file project web.xml add a Servlet and Servlet mapping such as:
 
+```xml
 <servlet>
 	<servlet-name>RestRouterServlet</servlet-name>
     <servlet-class>com.doitnext.http.router.RestRouterServlet</servlet-class>
@@ -79,4 +81,4 @@ In your WAR file project web.xml add a Servlet and Servlet mapping such as:
     <servlet-name>RestRouterServlet</servlet-name>
     <url-pattern>/*</url-pattern>
 </servlet-mapping>
-
+```
