@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.doitnext.http.router.exceptions;
+package com.doitnext.http.router;
 
-/**
- * Used to handle Http406 errors from within RestRouterServlet.
- * 
- * @author Steve Owens (steve@doitnext.com)
- * 
- */
-public class Http406Exception extends Exception {
+import javax.servlet.ServletConfig;
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -2301765097582380073L;
+public class RestRouterServletRouteRequestTest {
 
-	public Http406Exception() {
-		super(
-				String.format("HTTP 406: Not acceptable. The requested resource cannot be served as any of"
-						+ " the content types specified in the HTTP request 'Accept' header."));
+	public RestRouterServletRouteRequestTest() {
+		// TODO Auto-generated constructor stub
 	}
 
+	public void textRouteRequestHappyCase() {
+		
+	}
+	
+	private ServletConfig createBasicServletConfig() {
+		ServletConfig result = null;
+		
+		return result;
+	}
 }
