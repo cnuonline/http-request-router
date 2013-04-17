@@ -16,23 +16,21 @@
 package com.doitnext.http.router;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.web.HttpRequestHandler;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.exceptions.Http404Exception;
@@ -41,93 +39,68 @@ import com.doitnext.http.router.exceptions.Http406Exception;
 import com.doitnext.http.router.exceptions.Http415Exception;
 import com.doitnext.http.router.exceptions.Http500Exception;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
+import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.Path;
 import com.google.common.collect.ImmutableSortedSet;
 
-public class RestRouterServlet extends HttpServlet {
+public class RestRouterServlet implements HttpRequestHandler, InitializingBean {
 
 	/**
 	 * Serial version id for this servlet
 	 */
+	@SuppressWarnings("unused")
 	private static final long serialVersionUID = 149227713315378579L;
+	
 	private static Logger logger = LoggerFactory
 			.getLogger(RestRouterServlet.class);
-
-	private String restPackageRoot;
-	private String pathPrefix;
-	private DynamicEndpointResolver dynamicEndpointResolver = null;
-	private MethodInvoker methodInvoker;
+	
+	
 	private volatile ImmutableSortedSet<Route> routes;
-	private DefaultErrorHandler errorHandler = new DefaultErrorHandler();
+	
 
+	// Spring Injected
+	private String restPackageRoot;
+	private String pathPrefix = "";
+	private DynamicEndpointResolver dynamicEndpointResolver = null;
+	private MethodInvoker methodInvoker = new DefaultInvoker();
+	private EndpointResolver endpointResolver = new DefaultEndpointResolver();
+	private ResponseHandler errorHandler = new DefaultErrorHandler();
+	
 	public RestRouterServlet() {
-		// TODO Auto-generated constructor stub
 	}
 
+	@Required
+	public void setRestPackageRoot(String value) {
+		this.restPackageRoot = value;
+	}
+	
+	public void setPathPrefix(String pathPrefix) {
+		this.pathPrefix = pathPrefix;
+	}
+	
+	public void setMethodInvoker(MethodInvoker methodInvoker) {
+		this.methodInvoker = methodInvoker;
+	}
+	 
+	public void setEndpointResolver(EndpointResolver endpointResolver) {
+		this.endpointResolver = endpointResolver;
+	}
+	
+	public void setDynamicEndpointResolver(DynamicEndpointResolver value) {
+		this.dynamicEndpointResolver = value;
+	}
+	
+	public void setErrorHandler(ResponseHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+	
 	@Override
-	public void init(ServletConfig config) throws ServletException {
-		super.init(config);
-		pathPrefix = config.getInitParameter("pathPrefix");
-		restPackageRoot = config.getInitParameter("restPackageRoot");
-		EndpointResolver ep = new EndpointResolver();
-		routes = ImmutableSortedSet.copyOf(ep.resolveEndpoints(pathPrefix, restPackageRoot));
-
-		if (routes == null)
-			throw new ServletException(
-					"EndpointResolver returned a null TreeSet");
+	public void afterPropertiesSet() throws Exception {
+		routes = endpointResolver.resolveEndpoints(pathPrefix, restPackageRoot);
 		if (routes.isEmpty()) {
 			logger.warn("On init no routes established. This servlet will not respond to any requests while in this state.");
 		} else {
 			logger.debug(String.format("Identified %d routes.", routes.size()));
-		}
-
-		String methodInvokerClass = config
-				.getInitParameter("methodInvokerClass");
-		if ((methodInvokerClass == null)
-				|| (methodInvokerClass.trim().isEmpty())) {
-			methodInvoker = new DefaultInvoker();
-		} else {
-			String methodInvokerFactoryMethod = config
-					.getInitParameter("methodInvokerFactoryMethod");
-			initMethodInvoker(methodInvokerClass, methodInvokerFactoryMethod);
-		}
-
-		String dynamicEndpointResolverClass = config
-				.getInitParameter("dynamicEndpointResolver");
-		if (!StringUtils.isEmpty(dynamicEndpointResolverClass)) {
-			try {
-				Class<?> resolverClass = Class
-						.forName(dynamicEndpointResolverClass);
-				dynamicEndpointResolver = (DynamicEndpointResolver) resolverClass
-						.newInstance();
-			} catch (Exception e) {
-				throw new ServletException(
-						"Error instantiating dynamicEndpointResolver", e);
-			}
-		}
-	}
-
-	private void initMethodInvoker(String methodInvokerClass,
-			String methodInvokerFactoryMethod) throws ServletException {
-		try {
-			Class<?> loadedClass = Class.forName(methodInvokerClass);
-			Method factoryMethod = null;
-
-			if (!StringUtils.isEmpty(methodInvokerFactoryMethod)) {
-				@SuppressWarnings("unchecked")
-				Set<Method> methods = ReflectionUtils.getMethods(loadedClass,
-						ReflectionUtils.withName(methodInvokerFactoryMethod),
-						ReflectionUtils.withParametersCount(0));
-				if (!methods.isEmpty())
-					factoryMethod = methods.iterator().next();
-			}
-			if (factoryMethod == null)
-				methodInvoker = (MethodInvoker) loadedClass.newInstance();
-			else
-				methodInvoker = (MethodInvoker) factoryMethod
-						.invoke(loadedClass);
-		} catch (Exception e) {
-			throw new ServletException("Unable to load methodInvoker.", e);
 		}
 	}
 
@@ -241,111 +214,11 @@ public class RestRouterServlet extends HttpServlet {
 		return do405(method, am, req, resp);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest
-	 * , javax.servlet.http.HttpServletResponse)
-	 */
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		if (!routeRequest(HttpMethod.GET, req, resp))
-			super.doGet(req, resp);
+	public void handleRequest(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		HttpMethod httpMethod = HttpMethod.valueOf(request.getMethod().toUpperCase());
+		if(!routeRequest(httpMethod, request, response))
+			logger.error(String.format("Failed to handle %s request.", httpMethod.name()));
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * javax.servlet.http.HttpServlet#doHead(javax.servlet.http.HttpServletRequest
-	 * , javax.servlet.http.HttpServletResponse)
-	 */
-	@Override
-	protected void doHead(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		if (!routeRequest(HttpMethod.HEAD, req, resp))
-			super.doHead(req, resp);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * javax.servlet.http.HttpServlet#doPost(javax.servlet.http.HttpServletRequest
-	 * , javax.servlet.http.HttpServletResponse)
-	 */
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		if (!routeRequest(HttpMethod.POST, req, resp))
-			super.doPost(req, resp);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * javax.servlet.http.HttpServlet#doPut(javax.servlet.http.HttpServletRequest
-	 * , javax.servlet.http.HttpServletResponse)
-	 */
-	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		if (!routeRequest(HttpMethod.PUT, req, resp))
-			super.doPut(req, resp);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * javax.servlet.http.HttpServlet#doDelete(javax.servlet.http.HttpServletRequest
-	 * , javax.servlet.http.HttpServletResponse)
-	 */
-	@Override
-	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		if (!routeRequest(HttpMethod.DELETE, req, resp))
-			super.doDelete(req, resp);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see javax.servlet.http.HttpServlet#doOptions(javax.servlet.http.
-	 * HttpServletRequest, javax.servlet.http.HttpServletResponse)
-	 */
-	@Override
-	protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		if (!routeRequest(HttpMethod.OPTIONS, req, resp))
-			super.doOptions(req, resp);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * javax.servlet.http.HttpServlet#doTrace(javax.servlet.http.HttpServletRequest
-	 * , javax.servlet.http.HttpServletResponse)
-	 */
-	@Override
-	protected void doTrace(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		if (!routeRequest(HttpMethod.TRACE, req, resp))
-			super.doTrace(req, resp);
-	}
-
-	@Override
-	public String getServletInfo() {
-		return "Servlet: RestRouterServlet; Copyright: 2013 Steve Owens (steve@doitnext.com); Licence: Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0";
-	}
-
-	@Override
-	public void destroy() {
-		super.destroy();
-	}
-
 }

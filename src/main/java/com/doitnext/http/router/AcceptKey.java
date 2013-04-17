@@ -26,18 +26,29 @@ public class AcceptKey {
 	final private String returnType;
 	final private String returnFormat;
 
+	public AcceptKey(String returnType, String returnFormat) {
+		this.returnType = returnType;
+		this.returnFormat = returnFormat;
+	}
+	
 	public AcceptKey(Route route) {
 		this.returnType = route.getReturnType();
 		this.returnFormat = route.getReturnFormat();
-		if(this.returnFormat.equals("*/*")) {
-			throw new IllegalArgumentException("'*/*' is not a valid return format for a Route.");
-		}
 	}
 	
-	public AcceptKey(String acceptHeader) {
-		String parts[] = acceptHeader.split(";", 2);
+	public AcceptKey(String acceptHeaderPart) {
+		String parts[] = acceptHeaderPart.split(";");
 		this.returnFormat = parts[0].trim();
-		this.returnType = parts[1].trim();
+		for(int x = 1; x < parts.length; x++) {
+			if(parts[x].trim().toLowerCase().startsWith("model=")) {
+				String pieces[] = parts[x].split("=",2);
+				if(pieces.length > 1){
+					this.returnType = pieces[1].trim();
+					return;
+				}
+			}
+		}
+		this.returnType = "";
 	}
 
 	/**
@@ -55,16 +66,60 @@ public class AcceptKey {
 	}
 
 	public boolean matches(Route route) {
-		if(returnFormat.equals("*/*")) {
+		return matches(route.getReturnFormat(), route.getReturnType());
+	}
+	
+	public boolean matches(String returnFormat, String returnType) {
+		if(this.returnFormat.equals("*/*")) {
 			return true;
-		} else if(returnFormat.equals(route.getReturnFormat())) {
-			if(returnType.isEmpty())
+		} else if(this.returnFormat.equals(returnFormat)) {
+			if(this.returnType.isEmpty())
 				return true;
 			else
-				return returnType.equals(route.getReturnType());
+				return this.returnType.equals(returnType);
 		}
 		return false;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((returnFormat == null) ? 0 : returnFormat.hashCode());
+		result = prime * result
+				+ ((returnType == null) ? 0 : returnType.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AcceptKey other = (AcceptKey) obj;
+		if (returnFormat == null) {
+			if (other.returnFormat != null)
+				return false;
+		} else if (!returnFormat.equals(other.returnFormat))
+			return false;
+		if (returnType == null) {
+			if (other.returnType != null)
+				return false;
+		} else if (!returnType.equals(other.returnType))
+			return false;
+		return true;
+	}
+	
 	
 	
 }

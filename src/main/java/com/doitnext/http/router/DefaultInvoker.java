@@ -16,9 +16,12 @@
 package com.doitnext.http.router;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -28,6 +31,7 @@ import com.doitnext.http.router.annotations.PathParameter;
 import com.doitnext.http.router.annotations.QueryParameter;
 import com.doitnext.http.router.annotations.Terminus;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
+import com.doitnext.http.router.typeconverters.StringConversionUtil;
 import com.doitnext.pathutils.PathElement;
 
 /**
@@ -37,11 +41,12 @@ import com.doitnext.pathutils.PathElement;
  *
  */
 public class DefaultInvoker implements MethodInvoker {
-
+	StringConversionUtil stringConverter = new StringConversionUtil();
 	public DefaultInvoker() {
 		// TODO Auto-generated constructor stub
 	}
 
+	
 	@Override
 	public boolean invokeMethod(HttpMethod method, PathMatch pm,
 			HttpServletRequest req, HttpServletResponse resp) 
@@ -64,26 +69,47 @@ public class DefaultInvoker implements MethodInvoker {
 		Annotation[][] parameterAnnotations = implMethod.getParameterAnnotations();
 		Class<?>[] parameterTypes = implMethod.getParameterTypes();
 		Object[] arguments = new Object[parameterTypes.length];
+		try {	
+			// First map annotated parameters, and HttpServletRequest 
+			// and HttpServletResponse parameters to arguments.
+			mapParametersToArguments(parameterAnnotations, parameterTypes, variableMatches,
+					req, resp, terminus, arguments);
 		
-		// First map annotated parameters, and HttpServletRequest 
-		// and HttpServletResponse parameters to arguments.
-		mapParametersToArguments(parameterAnnotations, parameterTypes, variableMatches,
-				req, resp, terminus, arguments);
-		
-		try {
-			Object invocationResult = implMethod.invoke(implClass, arguments);
+			Object invocationResult = implMethod.invoke(route.getImplInstance(), arguments);
+			return route.getSuccessHandler().handleResponse(pm, req, resp, invocationResult);
+		} catch(InvocationTargetException ite) {
+			Throwable t = ite.getCause();
+			if(t == null)
+				t = ite;
+			return route.getErrorHandler().handleResponse(pm, req, resp, t);
 		} catch(Exception e) {
 			throw new ServletException(String.format("Error invoking method '%s' in class '%s'.", 
-					implMethod.getName(), implClass.getName()));
+					implMethod.getName(), implClass.getName()), e);
 		}
-		return false;
 	}
+	
+	private Map<String,String[]> parseQueryArgs(HttpServletRequest req) {
+		Map<String,String[]> result = new HashMap<String,String[]>();
+		Map<String,String[]> parameterMap = req.getParameterMap();
+		String queryString = req.getQueryString();
+		
+		for(Entry<String,String[]> entry : parameterMap.entrySet()) {
+			if(queryString.contains(String.format("?%s=",entry.getKey()))) {
+				result.put(entry.getKey(), entry.getValue());
+			} else if(queryString.contains(String.format("&%s=",entry.getKey()))) {
+				result.put(entry.getKey(), entry.getValue());
+			} 
+		}
+		return result;
+	}
+	
 	
 	// Default scope for unit testing
 	void mapParametersToArguments(Annotation[][] parameterAnnotations,
 			Class<?>[] parameterTypes, Map<String, PathElement> variableMatches,
 		    HttpServletRequest req, HttpServletResponse resp, String terminus, 
-		    Object[] arguments) {
+		    Object[] arguments) throws Exception {
+		Map<String,String[]> queryArgs = parseQueryArgs(req);
 		for(int x = 0; x < parameterTypes.length; x++){
 			if(parameterTypes.equals(HttpServletRequest.class)) {
 				arguments[x] = req;
@@ -99,12 +125,12 @@ public class DefaultInvoker implements MethodInvoker {
 					Annotation annotation = parameterAnnotations[x][y];
 					if(annotation instanceof PathParameter) {
 						mapPathParameter((PathParameter)annotation, arguments, 
-								parameterTypes[x], variableMatches);
+								parameterTypes[x], variableMatches, x);
 						bContinue = true;
 						continue;
 					} else if(annotation instanceof QueryParameter) {
 						mapQueryParameter((QueryParameter)annotation, arguments, 
-								parameterTypes[x], variableMatches);
+								parameterTypes[x], queryArgs, x);
 						bContinue = true;
 						continue;						
 					} else if(annotation instanceof Terminus) {
@@ -120,12 +146,24 @@ public class DefaultInvoker implements MethodInvoker {
 	}
 	
 	private void mapQueryParameter(QueryParameter parameterAnnotation, Object[] arguments, 
-			Class<?> parameterClass, Map<String, PathElement> variableMatches) {
-		
+			Class<?> parameterClass, Map<String,String[]> queryArgs, int paramIndex) throws ParseException {
+		String queryArg[] = queryArgs.get(parameterAnnotation.name());
+		if(!parameterClass.isArray()) {
+			if(queryArg.length > 0) {
+				arguments[paramIndex] = stringConverter.convert(queryArg[0], parameterClass);
+			}
+		} else {
+			Object queryParam[] = new Object[queryArg.length];
+			for(int x = 0; x < queryArg.length; x++) {
+				queryParam[x] = stringConverter.convert(queryArg[x], parameterClass.getComponentType());
+			}
+			arguments[paramIndex] = queryParam;
+		}	
 	}
 
 	private void mapPathParameter(PathParameter parameterAnnotation, Object[] arguments, 
-			Class<?> parameterClass, Map<String, PathElement> variableMatches) {
-		
+			Class<?> parameterClass, Map<String, PathElement> variableMatches, int paramIndex) throws ParseException {
+		PathElement pe = variableMatches.get(parameterAnnotation.name());
+		arguments[paramIndex] = stringConverter.convert(pe.getValue(), parameterClass);
 	}
 }

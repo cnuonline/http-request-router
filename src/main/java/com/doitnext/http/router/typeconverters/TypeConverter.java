@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.doitnext.http.router;
+package com.doitnext.http.router.typeconverters;
 
-import javax.servlet.ServletConfig;
+import java.text.ParseException;
 
-public class RestRouterServletRouteRequestTest {
-
-	public RestRouterServletRouteRequestTest() {
-		// TODO Auto-generated constructor stub
-	}
-
-	public void textRouteRequestHappyCase() {
-		
-	}
-	
-	private ServletConfig createBasicServletConfig() {
-		ServletConfig result = null;
-		
-		return result;
-	}
+/**
+ * Interface for converting a String to another type.
+ * 
+ * @author Stephen Owens (steve@doitnext.com)
+ *
+ */
+public interface TypeConverter {
+	Object convert(String value) throws ParseException;
 }

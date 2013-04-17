@@ -18,6 +18,7 @@ package com.doitnext.http.router;
 import java.lang.reflect.Method;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
+import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.PathTemplate;
 
 /**
@@ -39,6 +40,10 @@ public class Route implements Comparable<Route> {
 	final private String returnType;
 	final private String requestFormat;
 	final private String returnFormat;
+	final private MethodInvoker invoker;
+	final private Object implInstance;
+	final private ResponseHandler successHandler;
+	final private ResponseHandler errorHandler;
 	
 	
 	/**
@@ -49,11 +54,17 @@ public class Route implements Comparable<Route> {
 	 * @param returnFormat - used to identify the strategy for marshalling the response data 
 	 * @param pathTemplate - the template used to match URI's to routes
 	 * @param implClass - the class that implements the handler method
+	 * @param invoker - the invoker used to invoke methods on the implementation instance
+	 * @param implInstance - the implementation instance on which methods are to be invoked.
 	 * @param implMethod - the handler method in the implementing class
+	 * @param successHandler - handles the method response on normal return.
+	 * @param errorHandler - handles the method response on exception.
 	 */
 	public Route(HttpMethod httpMethod, String requestType, String returnType, 
 			String requestFormat, String returnFormat,
-			PathTemplate pathTemplate, Class<?> implClass, Method implMethod) {
+			PathTemplate pathTemplate, Class<?> implClass, Method implMethod,
+			MethodInvoker invoker, Object implInstance,
+			ResponseHandler successHandler, ResponseHandler errorHandler) {
 		this.pathTemplate = pathTemplate;
 		this.implClass = implClass;
 		this.implMethod = implMethod;
@@ -62,6 +73,10 @@ public class Route implements Comparable<Route> {
 		this.returnType = returnType;
 		this.requestFormat = requestFormat;
 		this.returnFormat = returnFormat;
+		this.invoker = invoker;
+		this.implInstance = implInstance;
+		this.successHandler = successHandler;
+		this.errorHandler = errorHandler;
 		// Ensure that pathTemplate is frozen thus making this class immutable
 		this.pathTemplate.freeze();
 	}
@@ -128,6 +143,35 @@ public class Route implements Comparable<Route> {
 	 */
 	public Method getImplMethod() {
 		return implMethod;
+	}
+
+	/**
+	 * @return the invoker
+	 */
+	public MethodInvoker getInvoker() {
+		return invoker;
+	}
+
+	/**
+	 * @return the implInstance
+	 */
+	public Object getImplInstance() {
+		return implInstance;
+	}
+
+	
+	/**
+	 * @return the successHandler
+	 */
+	public ResponseHandler getSuccessHandler() {
+		return successHandler;
+	}
+
+	/**
+	 * @return the errorHandler
+	 */
+	public ResponseHandler getErrorHandler() {
+		return errorHandler;
 	}
 
 	private int compareNullableStrings(String thisVal, String thatVal) {
