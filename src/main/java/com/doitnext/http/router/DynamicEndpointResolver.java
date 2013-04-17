@@ -15,7 +15,7 @@
  */
 package com.doitnext.http.router;
 
-import java.util.TreeSet;
+import com.google.common.collect.ImmutableSortedSet;
 
 /**
  * This interface may be implemented by web applications that utilize the RestRouterServlet.
@@ -32,14 +32,16 @@ public interface DynamicEndpointResolver {
 	 * This method is called by the RestRouterService in response to a call to the RestRouterServlet's
 	 * fireUpdateRoutes() method.
 	 * 
+	 * <p>The implementation of this method is expected to call {@link RestRouterServlet#routesUpdated}
+	 * when finished updating the known routes.  When RestRouterServlet calls this method, 
+	 * it does so with a defensive copy of the internal {@link RestRouterServlet#routes} field
+	 * which remains unmodified until <code>routesUpdated</code> is called with a new
+	 * set of routes being provided by the implementation of this method in the call.</p>
 	 * @param knownRoutes the list of routes known to the RestRouterServlet at the time
 	 * of the call to this method.  
-	 * @param eTag a string value that can be used by the implementation of this interface
-	 * to decide whether the knownRoutes tree should be updated.  The strategy for
-	 * computing this eTag is left to the implementor.
+	 * @param servlet 
+	 * the {@link RestRouterServlet} invoking this method.
 	 * 
-	 * @return the same or a new eTag value depending on what the implementation decided
-	 * to do with the knownRoutes.
 	 */
-	String updateRoutes(String eTag, TreeSet<Route> knownRoutes); 
+	void updateRoutes(RestRouterServlet servlet, ImmutableSortedSet<Route> knownRoutes); 
 }

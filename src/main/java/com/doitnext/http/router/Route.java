@@ -24,6 +24,9 @@ import com.doitnext.pathutils.PathTemplate;
  * Encapsulates an orderable data structure that binds a request category to a
  * specific implementation class that handles the request.
  * 
+ * <p>This class is Immutable and thread safe (presuming of course that 
+ * java.lang.reflect.Method and java.lang.Class<> are thread safe).</p>
+ * 
  * @author Steve Owens (steve@doitnext.com)
  *
  */
@@ -59,6 +62,8 @@ public class Route implements Comparable<Route> {
 		this.returnType = returnType;
 		this.requestFormat = requestFormat;
 		this.returnFormat = returnFormat;
+		// Ensure that pathTemplate is frozen thus making this class immutable
+		this.pathTemplate.freeze();
 	}
 
 	/**

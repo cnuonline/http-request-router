@@ -15,23 +15,34 @@
  */
 package com.doitnext.http.router.responsehandlers;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.doitnext.http.router.PathMatch;
+import com.doitnext.http.router.RestRouterServlet;
 
 /**
- * The interface for Exception Handler implementations for exceptions thrown by
- * endpoint invocations.
+ * The interface for response handler implementations.  A response handler 
+ * implementation is a strategy for mediating the response
+ * from a method invocation back to the client via HttpServletResponse.
  * 
  * @author Steve Owens (steve@doitnext.com)
  * 
  */
-public interface ErrorResponseHandler {
+public interface ResponseHandler {
 
 	/**
-	 * @param e
-	 *            the error thrown
+	 * @return a list of strings that indicates the response formats that this 
+	 * handler can deal with.
+	 */
+	public List<String> getResponseFormats();
+	
+	
+	public List<String> getResponseTypes();
+	
+	/**
 	 * @param pathMatch
 	 *            the {@link PathMatch} that identifies the invoked resource.
 	 * @param request
@@ -40,9 +51,12 @@ public interface ErrorResponseHandler {
 	 * @param response
 	 *            the {@link HttpServletResponse} passed to the
 	 *            {@link RestRouterServlet}
+	 * @param responseData
+	 * 	   the object containing the data to be returned in the response.
 	 * @return <code>true</code> if the error response handler handled the
 	 *         response <code>false</code> otherwise.
 	 */
-	public boolean handleResponse(Throwable e, PathMatch pathMatch,
-			HttpServletRequest request, HttpServletResponse response);
+	public boolean handleResponse(PathMatch pathMatch,
+			HttpServletRequest request, HttpServletResponse response,
+			Object responseData);
 }

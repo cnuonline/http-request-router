@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.servlet.ServletConfig;
@@ -34,7 +35,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
+import com.doitnext.http.router.exceptions.Http404Exception;
+import com.doitnext.http.router.exceptions.Http405Exception;
+import com.doitnext.http.router.exceptions.Http406Exception;
+import com.doitnext.http.router.exceptions.Http415Exception;
+import com.doitnext.http.router.exceptions.Http500Exception;
+import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.pathutils.Path;
+import com.google.common.collect.ImmutableSortedSet;
 
 public class RestRouterServlet extends HttpServlet {
 
@@ -47,9 +55,10 @@ public class RestRouterServlet extends HttpServlet {
 
 	private String restPackageRoot;
 	private String pathPrefix;
-	private DynamicEndpointResolver dynamicEndpointResolver;
+	private DynamicEndpointResolver dynamicEndpointResolver = null;
 	private MethodInvoker methodInvoker;
-	private volatile TreeSet<Route> routes;
+	private volatile ImmutableSortedSet<Route> routes;
+	private DefaultErrorHandler errorHandler = new DefaultErrorHandler();
 
 	public RestRouterServlet() {
 		// TODO Auto-generated constructor stub
@@ -61,7 +70,8 @@ public class RestRouterServlet extends HttpServlet {
 		pathPrefix = config.getInitParameter("pathPrefix");
 		restPackageRoot = config.getInitParameter("restPackageRoot");
 		EndpointResolver ep = new EndpointResolver();
-		routes = ep.resolveEndpoints(pathPrefix, restPackageRoot);
+		routes = ImmutableSortedSet.copyOf(ep.resolveEndpoints(pathPrefix, restPackageRoot));
+
 		if (routes == null)
 			throw new ServletException(
 					"EndpointResolver returned a null TreeSet");
@@ -74,62 +84,108 @@ public class RestRouterServlet extends HttpServlet {
 		String methodInvokerClass = config
 				.getInitParameter("methodInvokerClass");
 		if ((methodInvokerClass == null)
-				|| (methodInvokerClass.trim().isEmpty()))
-			throw new ServletException("No methodInvokerClass specified.");
+				|| (methodInvokerClass.trim().isEmpty())) {
+			methodInvoker = new DefaultInvoker();
+		} else {
+			String methodInvokerFactoryMethod = config
+					.getInitParameter("methodInvokerFactoryMethod");
+			initMethodInvoker(methodInvokerClass, methodInvokerFactoryMethod);
+		}
 
-		String methodInvokerFactoryMethod = config
-				.getInitParameter("methodInvokerFactoryMethod");
-		initMethodInvoker(methodInvokerClass, methodInvokerFactoryMethod);
+		String dynamicEndpointResolverClass = config
+				.getInitParameter("dynamicEndpointResolver");
+		if (!StringUtils.isEmpty(dynamicEndpointResolverClass)) {
+			try {
+				Class<?> resolverClass = Class
+						.forName(dynamicEndpointResolverClass);
+				dynamicEndpointResolver = (DynamicEndpointResolver) resolverClass
+						.newInstance();
+			} catch (Exception e) {
+				throw new ServletException(
+						"Error instantiating dynamicEndpointResolver", e);
+			}
+		}
 	}
-	
-	private void initMethodInvoker(String methodInvokerClass, String methodInvokerFactoryMethod) throws ServletException {
+
+	private void initMethodInvoker(String methodInvokerClass,
+			String methodInvokerFactoryMethod) throws ServletException {
 		try {
 			Class<?> loadedClass = Class.forName(methodInvokerClass);
 			Method factoryMethod = null;
-			
+
 			if (!StringUtils.isEmpty(methodInvokerFactoryMethod)) {
 				@SuppressWarnings("unchecked")
-				Set<Method> methods = ReflectionUtils.getMethods(loadedClass, 
+				Set<Method> methods = ReflectionUtils.getMethods(loadedClass,
 						ReflectionUtils.withName(methodInvokerFactoryMethod),
 						ReflectionUtils.withParametersCount(0));
-				if(!methods.isEmpty())
+				if (!methods.isEmpty())
 					factoryMethod = methods.iterator().next();
 			}
-			if(factoryMethod == null)
+			if (factoryMethod == null)
 				methodInvoker = (MethodInvoker) loadedClass.newInstance();
 			else
-				methodInvoker = (MethodInvoker) factoryMethod.invoke(loadedClass);
+				methodInvoker = (MethodInvoker) factoryMethod
+						.invoke(loadedClass);
 		} catch (Exception e) {
 			throw new ServletException("Unable to load methodInvoker.", e);
-		}		
+		}
+	}
+
+	/**
+	 * This method is called in order to initiate a callback to the
+	 * {@link #dynamicEndpointResolver} implementation of
+	 * {@link DynamicEndpointResolver#updateRoutes(RestRouterServlet, TreeSet) 
+	 */
+	public void fireUpdateRoutes() {
+		if (dynamicEndpointResolver != null) {
+			dynamicEndpointResolver.updateRoutes(this, routes);
+		} else
+			throw new IllegalStateException("No dynamicEndpointResolver set.");
+	}
+
+	public void routesUpdated(ImmutableSortedSet<Route> newRoutes) {
+		this.routes = newRoutes;
 	}
 
 	protected boolean do404(HttpMethod method, HttpServletRequest req,
 			HttpServletResponse resp) {
-		resp.setStatus(404);		
-		return true;
+		resp.setStatus(404);
+		return errorHandler.handleResponse(null, req, resp,
+				new Http404Exception());
 	}
 
 	protected boolean do406(HttpMethod method, HttpServletRequest req,
 			HttpServletResponse resp) {
-		resp.setStatus(406);		
-		return true;
+		resp.setStatus(406);
+		return errorHandler.handleResponse(null, req, resp,
+				new Http406Exception());
 	}
 
 	protected boolean do415(HttpMethod method, HttpServletRequest req,
 			HttpServletResponse resp) {
-		resp.setStatus(415);		
-		return true;
+		resp.setStatus(415);
+		String contentType = req.getHeader("Content-Type");
+		return errorHandler.handleResponse(null, req, resp,
+				new Http415Exception(contentType));
 	}
 
-	protected boolean do405(HttpMethod method, HttpServletRequest req,
-			HttpServletResponse resp) {
-		resp.setStatus(405);		
-		return true;
+	protected boolean do405(HttpMethod method, List<String> allowedMethods,
+			HttpServletRequest req, HttpServletResponse resp) {
+		resp.setStatus(405);
+		return errorHandler.handleResponse(null, req, resp,
+				new Http405Exception(method, allowedMethods));
+	}
+
+	protected boolean do500(HttpMethod method, HttpServletRequest req,
+			HttpServletResponse resp, Throwable error) {
+		resp.setStatus(500);
+		return errorHandler.handleResponse(null, req, resp,
+				new Http500Exception(error));
 	}
 
 	protected boolean routeRequest(HttpMethod method, HttpServletRequest req,
 			HttpServletResponse resp) {
+		SortedSet<Route> routes = this.routes;
 		List<PathMatch> pathMatches = new ArrayList<PathMatch>();
 		String pathString = req.getPathInfo();
 		for (Route route : routes) {
@@ -171,12 +227,18 @@ public class RestRouterServlet extends HttpServlet {
 		Set<HttpMethod> allowedMethods = new TreeSet<HttpMethod>();
 		for (PathMatch pm : pathMatchesByContentType) {
 			if (pm.getRoute().getHttpMethod().equals(method))
-				return methodInvoker.invokeMethod(method, pm, req, resp);
+				try {
+					return methodInvoker.invokeMethod(method, pm, req, resp);
+				} catch (Throwable t) {
+					return do500(method, req, resp, t);
+				}
 			else
 				allowedMethods.add(pm.getRoute().getHttpMethod());
 		}
-
-		return do405(method, req, resp);
+		List<String> am = new ArrayList<String>();
+		for (HttpMethod m : allowedMethods)
+			am.add(m.name());
+		return do405(method, am, req, resp);
 	}
 
 	/*

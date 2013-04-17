@@ -41,4 +41,21 @@ public interface ResponseFormatter {
 	 * a string representation of the formatted response or null if an error occured while formatting.
 	 */
 	String formatResponse(Object response, URI schemaUri, URI templateUri);
+
+	/**
+	 * Formats a java object to a specific format with amplifying details provided by a 
+	 * schema resource.
+	 * @param response 
+	 * the object model containing the data for the response.
+	 * @param schemaUri 
+	 * a URI that identifies a resource that the ResponseFormatter
+	 * implementation can use verify that the {@link #response} conforms to a pre-determined
+	 * set of constraints.
+	 * @param templateUri 
+	 * a URI that identifies a resource that the ResponseFormatter can use to 
+	 * template the response for output.
+	 * @return 
+	 * a byte array UTF-8 representation of the formatted response or null if an error occured while formatting.
+	 */
+	byte[] formatResponseUtf8(Object response, URI schemaUri, URI templateUri);
 }
