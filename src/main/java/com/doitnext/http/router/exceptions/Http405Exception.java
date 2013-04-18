@@ -35,7 +35,7 @@ public class Http405Exception extends Exception {
 	public Http405Exception(HttpMethod method, List<String> allowedMethods) {
 		super(String.format(
 				"HTTP 405: The requested method %s is now allowed for this resource. "
-						+ "The allowed methods are ", method.name(),
+						+ "The allowed methods are %s", method.name(),
 				allowedMethods));
 	}
 }

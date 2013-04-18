@@ -39,8 +39,9 @@ public interface ResponseFormatter {
 	 * template the response for output.
 	 * @return 
 	 * a string representation of the formatted response or null if an error occured while formatting.
+	 * @throws Exception 
 	 */
-	String formatResponse(Object response, URI schemaUri, URI templateUri);
+	String formatResponse(Object response, URI schemaUri, URI templateUri) throws Exception;
 
 	/**
 	 * Formats a java object to a specific format with amplifying details provided by a 
@@ -56,6 +57,7 @@ public interface ResponseFormatter {
 	 * template the response for output.
 	 * @return 
 	 * a byte array UTF-8 representation of the formatted response or null if an error occured while formatting.
+	 * @throws Exception 
 	 */
-	byte[] formatResponseUtf8(Object response, URI schemaUri, URI templateUri);
+	byte[] formatResponseUtf8(Object response, URI schemaUri, URI templateUri) throws Exception;
 }

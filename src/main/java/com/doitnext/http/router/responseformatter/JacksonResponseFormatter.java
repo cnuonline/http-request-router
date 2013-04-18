@@ -40,25 +40,13 @@ public class JacksonResponseFormatter implements ResponseFormatter {
 	}
 
 	@Override
-	public String formatResponse(Object response, URI schemaUri, URI templateUri) {
-		try {
-			return objectMapper.writeValueAsString(response);
-		} catch(Exception e) {
-			logger.error(String.format("Exception caught formatting response for %s using schema %s and tempmlate %s",
-					response.getClass().getName(), schemaUri, templateUri));
-		}
-		return null;
+	public String formatResponse(Object response, URI schemaUri, URI templateUri) throws Exception {
+		return objectMapper.writeValueAsString(response);
 	}
 
 	@Override
-	public byte[] formatResponseUtf8(Object response, URI schemaUri, URI templateUri) {
-		try {
-			return objectMapper.writeValueAsBytes(response);
-		} catch(Exception e) {
-			logger.error(String.format("Exception caught formatting response for %s using schema %s and tempmlate %s",
-					response.getClass().getName(), schemaUri, templateUri));
-		}
-		return null;
+	public byte[] formatResponseUtf8(Object response, URI schemaUri, URI templateUri) throws Exception {
+		return objectMapper.writeValueAsBytes(response);
 	}
 
 }

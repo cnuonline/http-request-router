@@ -17,25 +17,45 @@ package com.doitnext.http.router;
 
 
 /**
- * Used to index a set of routes by common easily matched Route attributes.
+ * Used to match annotations and reqeusts against a set of routes by request 'Accept' header related Route attributes.
  * 
  * @author Steve Owens (steve@doitnext.com)
  *
  */
 public class AcceptKey {
+	/**
+	 * The type or model of a method response (such as '/mymodels/team/roster')
+	 */
 	final private String returnType;
+	/**
+	 * The format of a method response (such as application/json)
+	 */
 	final private String returnFormat;
 
+	/**
+	 * This constuctor is used by {@link DefaultEndpointResolver} in order to 
+	 * provide a map key for collections of Response Handlers.  This enables
+	 * the endpoint resolver to properly wire an error and success handler to
+	 * a route.
+	 * 
+	 * @param returnType the type (or model) of the response body
+	 * @param returnFormat the format of the response body
+	 */
 	public AcceptKey(String returnType, String returnFormat) {
 		this.returnType = returnType;
 		this.returnFormat = returnFormat;
 	}
-	
-	public AcceptKey(Route route) {
-		this.returnType = route.getReturnType();
-		this.returnFormat = route.getReturnFormat();
-	}
-	
+
+	/**
+	 * This constructor is used primarily by {@link RequestRouterServlet} to match incoming request
+	 * accept header values to routes.
+	 * @param acceptHeaderPart a single part of an accept header.
+	 * For example if the request Accept header was
+	 * 'application/json; model=/mymodels/team/roster, application/xml; model=/mymodels/team/roster'
+	 * Then the header would be broken into two parts
+	 * <ol><li>application/json; model=/mymodels/team/roster</li>
+	 * <li>application/xml; model=/mymodels/team/roster</li></ol>
+	 */
 	public AcceptKey(String acceptHeaderPart) {
 		String parts[] = acceptHeaderPart.split(";");
 		this.returnFormat = parts[0].trim();
@@ -52,14 +72,14 @@ public class AcceptKey {
 	}
 
 	/**
-	 * @return the returnType
+	 * @return the {@link #returnType}
 	 */
 	public String getReturnType() {
 		return returnType;
 	}
 
 	/**
-	 * @return the returnFormat
+	 * @return the {@link #returnFormat}
 	 */
 	public String getReturnFormat() {
 		return returnFormat;

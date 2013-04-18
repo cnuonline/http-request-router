@@ -15,30 +15,40 @@
  */
 package com.doitnext.http.router;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Used to index a set of routes by common easily matched Route attributes.
+ * <p>The expected use case for this class is to match the content type header 
+ * of an incoming request to a Route.</p>
  * 
  * @author Steve Owens (steve@doitnext.com)
  *
  */
 public class ContentTypeKey {
+	@SuppressWarnings("unused")
+	private static final Logger logger = LoggerFactory.getLogger(ContentTypeKey.class);
+	
 	final private String requestType;
 	final private String requestFormat;
-
-	public ContentTypeKey(Route route) {
-		this.requestType = route.getRequestType();
-		this.requestFormat = route.getRequestFormat();
-	}
 	
 	public ContentTypeKey(String contentTypeHeader) {
 		if(contentTypeHeader != null) {
-			String parts[] = contentTypeHeader.split(";", 2);
+			String parts[] = contentTypeHeader.split(";");
 			this.requestFormat = parts[0].trim();
-			if(parts.length > 1)
-				this.requestType = parts[1].trim();
-			else
-				this.requestType = "";
+			String requestType = null;
+			for(int x = 1; x < parts.length; x++) {
+				String part = parts[x].trim();
+				if(part.startsWith("model=")) {
+					int startIndex = part.indexOf("=");
+					requestType = part.substring(startIndex+1);
+					break;
+				}
+			}
+			this.requestType = requestType;
 		} else {
 			requestType = null;
 			requestFormat = null;
@@ -67,19 +77,42 @@ public class ContentTypeKey {
 	 * @return the result of the match <code>true</code> is a match <code>false</code> is not a match.
 	 */
 	public boolean matches(Route route) {
-		if(route.getRequestFormat().equals("*/*"))
-			return true;
-		if(requestFormat == null) {
-			// Only match routes with an empty requestFormat
-			if(route.getRequestFormat().isEmpty()) {
-				return true;
-			}
-		} if(requestFormat.matches(route.getRequestFormat())) {
-			if(requestType == null)
-				return true;
-			if(requestType.isEmpty())
-				return true;
-			return requestType.equals(route.getRequestType());
+		// Routes with no request format expect no body
+		// Requests with no request format presumably 
+		// have no body.
+		if(StringUtils.isEmpty(route.getRequestFormat())){
+			return StringUtils.isEmpty(requestFormat);
+		}
+		if(StringUtils.isEmpty(requestFormat)) {
+			
+			return StringUtils.isEmpty(route.getRequestFormat());
+		}
+
+		// --- Examine requests that have an input body ---
+		
+		// Route matches all input formats
+		if(route.getRequestFormat().equals("*/*")) {
+			// Check for input model compatibilities
+
+			// Client doesn't specify input model so verify route doesn't care
+			// about the input model.
+			if(StringUtils.isEmpty(requestType))
+				return StringUtils.isEmpty(route.getRequestType());  
+			
+			// Client and route specify input models, make sure they match
+			return requestType.equalsIgnoreCase(route.getRequestType());
+		}
+		
+		// Client and route both specify an input format, make sure they match
+		if(requestFormat.matches(route.getRequestFormat())) { // they do
+			
+			// Client doesn't specify input model so verify route doesn't care
+			// about the input model.
+			if(StringUtils.isEmpty(requestType))
+				return StringUtils.isEmpty(route.getRequestType());  
+			
+			// Client and route specify input models, make sure they match
+			return requestType.equalsIgnoreCase(route.getRequestType());
 		}
 		return false;
 	}

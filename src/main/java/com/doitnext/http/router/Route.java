@@ -78,7 +78,8 @@ public class Route implements Comparable<Route> {
 		this.successHandler = successHandler;
 		this.errorHandler = errorHandler;
 		// Ensure that pathTemplate is frozen thus making this class immutable
-		this.pathTemplate.freeze();
+		if(this.pathTemplate != null)
+			this.pathTemplate.freeze();
 	}
 
 	/**
@@ -175,21 +176,30 @@ public class Route implements Comparable<Route> {
 	}
 
 	private int compareNullableStrings(String thisVal, String thatVal) {
-		if(thisVal == null) {
-			if(thatVal != null)
-				return -1;
-		}
+		// Comparison rule: Nulls come last
+		if(thisVal == null)
+				return (thatVal == null) ? 0 : 1;
 		if(thatVal == null)
-			return 1;
+			return -1;
 		return thisVal.compareToIgnoreCase(thatVal);
 	}
 	
+	private <T extends Comparable<T>> int compareNullableValues(T thisVal, T thatVal) {
+		// Comparison rule: Nulls come last
+		if(thisVal == null)
+			return (thatVal == null) ? 0 : 1;
+		if(thatVal == null)
+			return -1;
+		return thisVal.compareTo(thatVal);
+	}
+
+	
 	@Override
 	public int compareTo(Route that) {
-		int compareResult = this.pathTemplate.compareTo(that.pathTemplate);
+		int compareResult = compareNullableValues(this.pathTemplate,that.pathTemplate);
 		if(compareResult != 0)
 			return compareResult;
-		compareResult = this.httpMethod.compareTo(that.httpMethod);
+		compareResult = compareNullableValues(this.httpMethod,that.httpMethod);
 		if(compareResult != 0)
 			return compareResult;
 		compareResult = compareNullableStrings(this.returnType,that.returnType);
@@ -207,7 +217,5 @@ public class Route implements Comparable<Route> {
 		
 		return 0;
 	}
-
-	
 	
 }

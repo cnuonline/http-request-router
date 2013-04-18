@@ -21,6 +21,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.lang.model.type.UnknownTypeException;
+
+import com.doitnext.http.router.exceptions.UnsupportedConversionException;
+
 /**
  * Converts strings to a known set of convertible types.
  * 
@@ -78,7 +82,7 @@ public class StringConversionUtil {
 			@Override
 			public Object convert(String value) {
 				if(value.length() != 1)
-					throw new IndexOutOfBoundsException(String.format("%s not convertible to char", value));
+					throw new IndexOutOfBoundsException(String.format("'%s' not convertible to char", value));
 				return value.charAt(0);
 			}
 		});
@@ -138,7 +142,7 @@ public class StringConversionUtil {
 		if(converters.containsKey(classz)) {
 			return converters.get(classz).convert(value);
 		} else {
-			throw new ParseException(String.format("No conversion from String to %s", classz.getName()),0);
+			throw new UnsupportedConversionException(String.class, classz);
 		}
 	}
 

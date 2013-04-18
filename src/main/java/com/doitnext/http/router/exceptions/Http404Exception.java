@@ -28,8 +28,8 @@ public class Http404Exception extends Exception {
 	 */
 	private static final long serialVersionUID = -2301765097582380073L;
 
-	public Http404Exception() {
-		super("HTTP 404: The requested URL [URL] was not found on this server.");
+	public Http404Exception(String url) {
+		super(String.format("HTTP 404: The requested URL '%s' was not found on this server.", url));
 	}
 
 }
