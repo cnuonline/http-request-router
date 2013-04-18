@@ -35,9 +35,13 @@ import com.doitnext.pathutils.PathTemplate;
 import com.google.common.collect.ImmutableSortedSet;
 
 /**
- * Uses Reflections to locate @RestResource annotated classes to build routes
- * from bind their @RestMethod definitions. These Routes are returned as a
- * TreeSet which can be used to map an HttpRequest to an implementation.
+ * <p>Uses Reflections to locate @RestResource annotated classes to build routes
+ * from to @RestMethod definitions. These {@link Route} objects are returned as an
+ * Ordered Immutable set which can be used to map an HTTP request to a request 
+ * handler implementation
+ * on a first match first serve basis.</p>
+ * 
+ * <p>The ordering ensures longest {@link PathTemplate} routes are tried first.</p>
  * 
  * @author Steve Owens (steve@doitnext.com)
  * 
@@ -48,8 +52,8 @@ public class DefaultEndpointResolver implements EndpointResolver {
 	private static Logger logger = LoggerFactory
 			.getLogger(DefaultEndpointResolver.class);
 	private MethodInvoker invoker;
-	private Map<AcceptKey, ResponseHandler> successHandlers;
-	private Map<AcceptKey, ResponseHandler> errorHandlers;
+	private Map<MethodReturnKey, ResponseHandler> successHandlers;
+	private Map<MethodReturnKey, ResponseHandler> errorHandlers;
 	private DefaultErrorHandler defaultErrorHandler = new DefaultErrorHandler();
 
 	public DefaultEndpointResolver() {
@@ -62,12 +66,12 @@ public class DefaultEndpointResolver implements EndpointResolver {
 
 	@Required
 	public void setSuccessHandlers(
-			Map<AcceptKey, ResponseHandler> successHandlers) {
+			Map<MethodReturnKey, ResponseHandler> successHandlers) {
 		this.successHandlers = successHandlers;
 	}
 
 	@Required
-	public void setErrorHandlers(Map<AcceptKey, ResponseHandler> errorHandlers) {
+	public void setErrorHandlers(Map<MethodReturnKey, ResponseHandler> errorHandlers) {
 		this.errorHandlers = errorHandlers;
 	}
 
@@ -110,7 +114,7 @@ public class DefaultEndpointResolver implements EndpointResolver {
 			PathTemplate pathTemplate = new PathTemplate("/", "?", null);
 			try {
 				Object implInstance = classz.newInstance();
-				AcceptKey acceptKey = new AcceptKey(methodImpl.returnType(),
+				MethodReturnKey acceptKey = new MethodReturnKey(methodImpl.returnType(),
 						methodImpl.returnFormat());
 				if (!successHandlers.containsKey(acceptKey)) {
 					logger.error(String

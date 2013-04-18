@@ -15,14 +15,16 @@
  */
 package com.doitnext.http.router;
 
+import org.apache.commons.lang3.StringUtils;
+
 
 /**
- * Used to match annotations and reqeusts against a set of routes by request 'Accept' header related Route attributes.
+ * Used to match reqeusts against a set of routes by request 'Accept' header related Route attributes.
  * 
  * @author Steve Owens (steve@doitnext.com)
  *
  */
-public class AcceptKey {
+public final class AcceptKey {
 	/**
 	 * The type or model of a method response (such as '/mymodels/team/roster')
 	 */
@@ -32,19 +34,6 @@ public class AcceptKey {
 	 */
 	final private String returnFormat;
 
-	/**
-	 * This constuctor is used by {@link DefaultEndpointResolver} in order to 
-	 * provide a map key for collections of Response Handlers.  This enables
-	 * the endpoint resolver to properly wire an error and success handler to
-	 * a route.
-	 * 
-	 * @param returnType the type (or model) of the response body
-	 * @param returnFormat the format of the response body
-	 */
-	public AcceptKey(String returnType, String returnFormat) {
-		this.returnType = returnType;
-		this.returnFormat = returnFormat;
-	}
 
 	/**
 	 * This constructor is used primarily by {@link RequestRouterServlet} to match incoming request
@@ -57,18 +46,23 @@ public class AcceptKey {
 	 * <li>application/xml; model=/mymodels/team/roster</li></ol>
 	 */
 	public AcceptKey(String acceptHeaderPart) {
-		String parts[] = acceptHeaderPart.split(";");
-		this.returnFormat = parts[0].trim();
-		for(int x = 1; x < parts.length; x++) {
-			if(parts[x].trim().toLowerCase().startsWith("model=")) {
-				String pieces[] = parts[x].split("=",2);
-				if(pieces.length > 1){
-					this.returnType = pieces[1].trim();
-					return;
+		if(acceptHeaderPart != null) {
+			String parts[] = acceptHeaderPart.split(";");
+			this.returnFormat = parts[0].trim();
+			String returnType = null;
+			for(int x = 1; x < parts.length; x++) {
+				String part = parts[x].trim();
+				if(part.startsWith("model=")) {
+					int startIndex = part.indexOf("=");
+					returnType = part.substring(startIndex+1);
+					break;
 				}
 			}
+			this.returnType = returnType;
+		} else {
+			this.returnType = null;
+			this.returnFormat = null;
 		}
-		this.returnType = "";
 	}
 
 	/**
@@ -90,56 +84,27 @@ public class AcceptKey {
 	}
 	
 	public boolean matches(String returnFormat, String returnType) {
+		// If no accept header then no return is expected
+		if(StringUtils.isEmpty(this.returnFormat))
+			return (StringUtils.isEmpty(returnFormat)&&StringUtils.isEmpty(returnType));
+		
+		//If request accepts any format check for model match
 		if(this.returnFormat.equals("*/*")) {
-			return true;
-		} else if(this.returnFormat.equals(returnFormat)) {
-			if(this.returnType.isEmpty())
-				return true;
-			else
-				return this.returnType.equals(returnType);
+			if(StringUtils.isEmpty(this.returnType))
+				return true; // Request accepts any model
+			else // Request wants a particular model
+				return this.returnType.equalsIgnoreCase(returnType);
 		}
+		
+		// If formats match check for model match
+		if(this.returnFormat.equalsIgnoreCase(returnFormat)) {
+			if(StringUtils.isEmpty(this.returnType))
+				return true; // Any model will do
+			else
+				return this.returnType.equalsIgnoreCase(returnType);
+		}
+		
+		// No match
 		return false;
 	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((returnFormat == null) ? 0 : returnFormat.hashCode());
-		result = prime * result
-				+ ((returnType == null) ? 0 : returnType.hashCode());
-		return result;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		AcceptKey other = (AcceptKey) obj;
-		if (returnFormat == null) {
-			if (other.returnFormat != null)
-				return false;
-		} else if (!returnFormat.equals(other.returnFormat))
-			return false;
-		if (returnType == null) {
-			if (other.returnType != null)
-				return false;
-		} else if (!returnType.equals(other.returnType))
-			return false;
-		return true;
-	}
-	
-	
-	
 }
