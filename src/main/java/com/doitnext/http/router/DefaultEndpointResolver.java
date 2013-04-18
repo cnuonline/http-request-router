@@ -24,7 +24,10 @@ import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Required;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import com.doitnext.http.router.annotations.RestMethod;
@@ -48,7 +51,7 @@ import com.google.common.collect.ImmutableSortedSet;
  * 
  */
 @Component("defaultEndpointResolver")
-public class DefaultEndpointResolver implements EndpointResolver {
+public class DefaultEndpointResolver implements EndpointResolver, ApplicationContextAware {
 
 	private static Logger logger = LoggerFactory
 			.getLogger(DefaultEndpointResolver.class);
@@ -57,7 +60,8 @@ public class DefaultEndpointResolver implements EndpointResolver {
 	private Map<MethodReturnKey, ResponseHandler> errorHandlers;
 	private DefaultErrorHandler defaultErrorHandler = new DefaultErrorHandler();
 	private PathTemplateParser pathTemplateParser = new PathTemplateParser("/","?");
-
+	private ApplicationContext applicationContext;
+	
 	public DefaultEndpointResolver() {
 	}
 
@@ -119,7 +123,8 @@ public class DefaultEndpointResolver implements EndpointResolver {
 			pathBuilder.append(methodImpl.template());
 			try {
 				PathTemplate pathTemplate = pathTemplateParser.parse(pathBuilder.toString());
-				Object implInstance = classz.newInstance();
+				
+				Object implInstance = applicationContext.getBean(resource.value(), classz);
 				MethodReturnKey acceptKey = new MethodReturnKey(methodImpl.returnType(),
 						methodImpl.returnFormat());
 				if (!successHandlers.containsKey(acceptKey)) {
@@ -185,6 +190,12 @@ public class DefaultEndpointResolver implements EndpointResolver {
 			return res.requestType();
 		else
 			return mthd.requestType();
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext)
+			throws BeansException {
+		this.applicationContext = applicationContext;
 	}
 
 }

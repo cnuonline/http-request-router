@@ -32,11 +32,11 @@ import java.lang.annotation.Target;
 @Documented
 public @interface RestResource {
 	/**
-	 * The value may indicate a suggestion for a logical component name,
-	 * to be turned into a Spring bean in case of an autodetected component.
-	 * @return the suggested component name, if any
+	 * The identifies the bean name of this resource.  Bean instantiation is used
+	 * to instantiate the class annotated by this resource.
+	 * @return the spring bean name
 	 */
-	String value() default "";
+	String value();
 	
 	/**
 	 * @return the URI path to the resource.

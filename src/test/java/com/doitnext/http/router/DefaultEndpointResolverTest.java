@@ -1,7 +1,7 @@
 package com.doitnext.http.router;
 
 
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +11,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.springframework.context.ApplicationContext;
+
+import com.doitnext.http.router.exampleclasses.TestResourceImpl;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
 
 public class DefaultEndpointResolverTest {
@@ -24,6 +27,12 @@ public class DefaultEndpointResolverTest {
 	public void testResolveEndpoints() {
 		
 		DefaultEndpointResolver resolver = new DefaultEndpointResolver();
+		ApplicationContext applicationContext = mock(ApplicationContext.class);
+		resolver.setApplicationContext(applicationContext);
+		TestResourceImpl testResourceImpl = new TestResourceImpl();
+		
+		when(applicationContext.getBean("testResource1", TestResourceImpl.class)).thenReturn(testResourceImpl);
+		
 		ResponseHandler errorHandlerJson = mock(ResponseHandler.class);
 		ResponseHandler successHandlerJson = mock(ResponseHandler.class);
 		MethodInvoker invoker = mock(MethodInvoker.class);
@@ -41,6 +50,7 @@ public class DefaultEndpointResolverTest {
 		
 		SortedSet<Route> routes = resolver.resolveEndpoints("/gigi", "com.doitnext.http.router.exampleclasses");
 		
+		verify(applicationContext, atLeastOnce()).getBean(eq("testResource1"), eq(TestResourceImpl.class));
 		Assert.assertNotNull(routes);
 		Assert.assertFalse(routes.isEmpty());
 	}

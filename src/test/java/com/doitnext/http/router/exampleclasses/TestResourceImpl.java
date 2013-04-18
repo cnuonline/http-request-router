@@ -18,8 +18,6 @@ package com.doitnext.http.router.exampleclasses;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.stereotype.Controller;
-
 import com.doitnext.http.router.annotations.PathParameter;
 import com.doitnext.http.router.annotations.RestMethod;
 import com.doitnext.http.router.annotations.RestResource;
@@ -31,8 +29,7 @@ import com.doitnext.http.router.exceptions.UnrecongizedKeyException;
  * @author Steve Owens (steve@doitnext.com)
  * 
  */
-@Controller("TestResource")
-@RestResource(pathprefix = "/teams")
+@RestResource(value="testResource1", pathprefix = "/teams")
 public class TestResourceImpl {
 
 	private List<TestTeamPojo> teams = new ArrayList<TestTeamPojo>();
