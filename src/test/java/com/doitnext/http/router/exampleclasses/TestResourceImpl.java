@@ -29,48 +29,73 @@ import com.doitnext.http.router.exceptions.UnrecongizedKeyException;
 
 /**
  * @author Steve Owens (steve@doitnext.com)
- *
+ * 
  */
 @Controller("TestResource")
 @RestResource(pathprefix = "/teams")
 public class TestResourceImpl {
 
 	private List<TestTeamPojo> teams = new ArrayList<TestTeamPojo>();
-	
+
 	public TestResourceImpl() {
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	@RestMethod(method = HttpMethod.POST, template = "")
 	public TestTeamPojo addTeam(TestTeamPojo newTeam) {
-		if(teams.contains(newTeam))
-			throw new DuplicateKeyConstraintException(String.format("There is already a team in the collection with key %s", newTeam.getKey()));
+		if (teams.contains(newTeam))
+			throw new DuplicateKeyConstraintException(String.format(
+					"There is already a team in the collection with key %s",
+					newTeam.getKey()));
 		teams.add(newTeam);
 		return newTeam;
 	}
 
-	@RestMethod(method = HttpMethod.PUT, template = "")	
+	@RestMethod(method = HttpMethod.PUT, template = "")
 	public TestTeamPojo updateTeam(TestTeamPojo teamToUpdate) {
-		if(!teams.contains(teamToUpdate))
-			throw new UnrecongizedKeyException(String.format("No team with key %s is in the collection."));
+		if (!teams.contains(teamToUpdate))
+			throw new UnrecongizedKeyException(
+					String.format("No team with key %s is in the collection."));
 		teams.remove(teamToUpdate);
 		teams.add(teamToUpdate);
 		return teamToUpdate;
 	}
 
-	@RestMethod(method = HttpMethod.GET, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z '\\-0-9]{2,30}:TEXT}")	
-	public TestTeamPojo getTeam(@PathParameter(name = "teamType") String teamType,
+	@RestMethod(method = HttpMethod.GET, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}")
+	public TestTeamPojo getTeam(
+			@PathParameter(name = "teamType") String teamType,
 			@PathParameter(name = "teamName") String teamName) {
-		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType.toUpperCase()), teamName);
-		if(teams.contains(key))
+		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
+				.toUpperCase()), teamName);
+		if (teams.contains(key))
 			return teams.get(teams.indexOf(key));
 		return null;
 	}
 
-	@RestMethod(method = HttpMethod.PUT, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z '\\-0-9]{2,30}:TEXT}")		
-	public boolean deleteTeam(@PathParameter(name = "teamType") String teamType,
+	@RestMethod(method = HttpMethod.DELETE, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}")
+	public boolean deleteTeam(
+			@PathParameter(name = "teamType") String teamType,
 			@PathParameter(name = "teamName") String teamName) {
-		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType.toUpperCase()), teamName);
+		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
+				.toUpperCase()), teamName);
+		return teams.remove(key);
+	}
+
+	@RestMethod(method = HttpMethod.DELETE, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}", returnFormat = "application/xml")
+	public boolean deleteTeam2(
+			@PathParameter(name = "teamType") String teamType,
+			@PathParameter(name = "teamName") String teamName) {
+		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
+				.toUpperCase()), teamName);
+		return teams.remove(key);
+	}
+	
+	@RestMethod(method = HttpMethod.DELETE, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}")
+	public boolean deleteTeam3(
+			@PathParameter(name = "teamType") String teamType,
+			@PathParameter(name = "teamName") String teamName) {
+		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
+				.toUpperCase()), teamName);
 		return teams.remove(key);
 	}
 }

@@ -218,4 +218,34 @@ public class Route implements Comparable<Route> {
 		return 0;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("{");
+		sb.append(this.httpMethod.name());
+		sb.append(": \"");
+		sb.append(this.pathTemplate.getLexicalPath());
+		sb.append("\", ReturnFormat: \"");
+		sb.append(this.returnFormat);
+		sb.append("; ReturnType:\"");
+		sb.append(this.returnType);
+		sb.append("\", RequestFormat: \"");
+		sb.append(this.requestFormat);
+		sb.append("\", RequestType: \"");
+		sb.append(this.requestType);
+		sb.append("\"} --> [");
+		sb.append(this.implClass.getName());
+		sb.append(".");
+		sb.append(this.implMethod.getName());
+		sb.append("(");
+		boolean first = true;
+		for(Class<?> classz : this.implMethod.getParameterTypes()) {
+			if(!first)
+				sb.append(", ");
+			sb.append(classz.getSimpleName());
+			first = false;
+		}
+		sb.append(")]");
+		return sb.toString();
+	}
 }

@@ -32,6 +32,7 @@ import com.doitnext.http.router.annotations.RestResource;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.PathTemplate;
+import com.doitnext.pathutils.PathTemplateParser;
 import com.google.common.collect.ImmutableSortedSet;
 
 /**
@@ -55,6 +56,7 @@ public class DefaultEndpointResolver implements EndpointResolver {
 	private Map<MethodReturnKey, ResponseHandler> successHandlers;
 	private Map<MethodReturnKey, ResponseHandler> errorHandlers;
 	private DefaultErrorHandler defaultErrorHandler = new DefaultErrorHandler();
+	private PathTemplateParser pathTemplateParser = new PathTemplateParser("/","?");
 
 	public DefaultEndpointResolver() {
 	}
@@ -107,20 +109,25 @@ public class DefaultEndpointResolver implements EndpointResolver {
 		Set<Method> methods = ReflectionUtils.getAllMethods(classz,
 				ReflectionUtils.withAnnotation(RestMethod.class));
 
+		if(logger.isDebugEnabled())
+			logger.debug(String.format("Creating routes for %d methods in %s", methods.size(), classz.getName()));
 		for (Method method : methods) {
+			if(logger.isDebugEnabled())
+				logger.debug(String.format("Attempting to create route for method %s", method.getName()));
 			RestMethod methodImpl = method.getAnnotation(RestMethod.class);
 			pathBuilder = new StringBuilder(resourcePathPrefix);
 			pathBuilder.append(methodImpl.template());
-			PathTemplate pathTemplate = new PathTemplate("/", "?", null);
 			try {
+				PathTemplate pathTemplate = pathTemplateParser.parse(pathBuilder.toString());
 				Object implInstance = classz.newInstance();
 				MethodReturnKey acceptKey = new MethodReturnKey(methodImpl.returnType(),
 						methodImpl.returnFormat());
 				if (!successHandlers.containsKey(acceptKey)) {
 					logger.error(String
-							.format("Unable to map response handler to return type of %s model=%s",
-									methodImpl.returnFormat(),
-									methodImpl.returnType()));
+							.format("No response handler for method with %s",
+									acceptKey));
+					if(logger.isDebugEnabled())
+						logger.debug(String.format("successHandlers = %s", successHandlers));		
 					continue;
 				}
 				ResponseHandler errorHandler = defaultErrorHandler;

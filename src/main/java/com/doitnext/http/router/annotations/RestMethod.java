@@ -55,6 +55,7 @@ public @interface RestMethod {
 	 * <p>For example given the http header:</p>
 	 * <code><nobr>Content-Type: application/json; model=http://schemas.mycompany.com/models/account</nobr></code>
 	 * <p>The requestType would be 'http://schemas.mycompany.com/models/account'</p>
+	 * <p>The default value is '' meaning no input model on request.</p>
 	 */
 	String requestType() default "";
 	/**
@@ -64,6 +65,7 @@ public @interface RestMethod {
 	 * <p>For example given the http header:</p>
 	 * <code><nobr>Accept: application/json; model=http://schemas.mycompany.com/models/account</nobr></code>
 	 * <p>The returnType would be 'http://schemas.mycompany.com/models/account'</p>
+	 * <p>The default value is '' meaning no model negotiation just format agreement</p>
 	 */
 	String returnType() default "";
 	/**
@@ -73,6 +75,7 @@ public @interface RestMethod {
 	 * <p>For example given the http header:</p>
 	 * <code><nobr>Content-Type: application/json; model=http://schemas.mycompany.com/models/account</nobr></code>
 	 * <p>The requestFormat would be 'application/json'</p>
+	 * <p>The default value is '' which pre-supposes requests with no body.</p>
 	 */
 	String requestFormat() default "";
 	/**
@@ -82,6 +85,7 @@ public @interface RestMethod {
 	 * <p>For example given the http header:</p>
 	 * <code><nobr>Accept: application/json; model=http://schemas.mycompany.com/models/account</nobr></code>
 	 * <p>The returnFormat would be 'application/json'</p>
+	 * <p>The default value is 'application/json'</p>
 	 */
-	String returnFormat() default "";
+	String returnFormat() default "application/json";
 }

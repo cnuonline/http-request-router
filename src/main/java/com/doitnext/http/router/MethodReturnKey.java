@@ -82,4 +82,17 @@ public final class MethodReturnKey {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{\"returnType\":\"")
+				.append(returnType).append("\", returnFormat\":\"")
+				.append(returnFormat).append("}");
+		return builder.toString();
+	}
+
+	
 }

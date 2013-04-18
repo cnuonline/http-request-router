@@ -21,8 +21,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.lang.model.type.UnknownTypeException;
-
 import com.doitnext.http.router.exceptions.UnsupportedConversionException;
 
 /**

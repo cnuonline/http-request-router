@@ -2,11 +2,9 @@ package com.doitnext.http.router;
 
 import java.lang.reflect.Method;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Assert;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.exampleclasses.TestResourceImpl;

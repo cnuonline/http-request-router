@@ -91,14 +91,6 @@ public class DefaultErrorHandler implements ResponseHandler {
 				cause = cause.getCause();
 			}
 		}
-		/**
-		 * @return the errorMessages
-		 */
-		public List<String> getErrorMessages() {
-			return errorMessages;
-		}
-		
-		
 	}
 
 }
