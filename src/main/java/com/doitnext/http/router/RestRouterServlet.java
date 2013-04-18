@@ -201,7 +201,7 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean {
 		for (PathMatch pm : pathMatchesByContentType) {
 			if (pm.getRoute().getHttpMethod().equals(method))
 				try {
-					return methodInvoker.invokeMethod(method, pm, req, resp);
+					return methodInvoker.invokeMethod(method, pm, req, resp).handled;
 				} catch (Throwable t) {
 					return do500(method, req, resp, t);
 				}

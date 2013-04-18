@@ -30,6 +30,18 @@ import com.doitnext.http.router.annotations.enums.HttpMethod;
  */
 public interface MethodInvoker {
 	
+	enum InvokeResult { 
+		METHOD_SUCCESS(true, true), METHOD_ERROR(false, true),
+		METHOD_SUCCESS_UNHANDLED(true, false), METHOD_ERROR_UNHANDLED(false, false);
+		
+		public final boolean handled;
+		public final boolean success;
+		private InvokeResult(boolean success, boolean handled){
+			this.handled = handled;
+			this.success = success;
+		}
+	};
+	
 	
 	/**
 	 * Invokes a method on behalf of an HttpServletRequest
@@ -37,11 +49,16 @@ public interface MethodInvoker {
 	 * @param pm the PathMatch object containing the matched path and the route.
 	 * @param req the HttpServletRequest
 	 * @param resp the HttpServletResponse
-	 * @return <code>true</code> if request was handled <code>false</code> otherwise.
+	 * @return one of 4 possible values [METHOD_SUCCESS, METHOD_ERROR, METHOD_SUCCESS_UNHANDLED, METHOD_ERROR_UNHANDLED]
+	 * <dl>
+	 * <dt><code>METHOD_SUCCESS*</code></dt><dd> if method invoked returned normally</dd> 
+	 * <dt><code>METHOD_ERROR*</code></dt><dd> if the method invoked threw an exception.</dd>
+	 * <dt><code>*_UNHANDLED</code></dt><dd> if the result handler failed to handle the result.<dd>
+	 * </dl>
 	 * @throws ServletException
 	 * 		on invocation error.
 	 * @see java.lang.reflect.Method#invoke
 	 */
-	boolean invokeMethod(HttpMethod method, PathMatch pm,
+	InvokeResult invokeMethod(HttpMethod method, PathMatch pm,
 			HttpServletRequest req, HttpServletResponse resp) throws ServletException;
 }

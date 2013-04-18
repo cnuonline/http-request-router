@@ -33,11 +33,21 @@ import com.doitnext.http.router.exceptions.UnrecongizedKeyException;
 public class TestResourceImpl {
 
 	private List<TestTeamPojo> teams = new ArrayList<TestTeamPojo>();
-
+	private String lastMethodCalled = null;
+	private String lastHttpMethodCalled = null;
+	
 	public TestResourceImpl() {
 		// TODO Auto-generated constructor stub
 	}
 
+	public String getLastMethodCalled() {
+		return lastMethodCalled;
+	}
+	
+	public String getLastHttpMethodCalled() {
+		return lastHttpMethodCalled;
+	}
+	
 	@RestMethod(method = HttpMethod.POST, template = "")
 	public TestTeamPojo addTeam(TestTeamPojo newTeam) {
 		if (teams.contains(newTeam))
@@ -45,6 +55,8 @@ public class TestResourceImpl {
 					"There is already a team in the collection with key %s",
 					newTeam.getKey()));
 		teams.add(newTeam);
+		lastMethodCalled = "addTeam";
+		lastHttpMethodCalled = "POST";
 		return newTeam;
 	}
 
@@ -55,6 +67,8 @@ public class TestResourceImpl {
 					String.format("No team with key %s is in the collection."));
 		teams.remove(teamToUpdate);
 		teams.add(teamToUpdate);
+		lastMethodCalled = "updateTeam";
+		lastHttpMethodCalled = "PUT";
 		return teamToUpdate;
 	}
 
@@ -66,6 +80,9 @@ public class TestResourceImpl {
 				.toUpperCase()), teamName);
 		if (teams.contains(key))
 			return teams.get(teams.indexOf(key));
+		lastMethodCalled = "getTeam";
+		lastHttpMethodCalled = "GET";
+				
 		return null;
 	}
 
@@ -75,6 +92,10 @@ public class TestResourceImpl {
 			@PathParameter(name = "teamName") String teamName) {
 		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
 				.toUpperCase()), teamName);
+
+		lastMethodCalled = "deleteTeam";
+		lastHttpMethodCalled = "DELETE";
+
 		return teams.remove(key);
 	}
 

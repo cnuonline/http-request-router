@@ -27,6 +27,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.doitnext.http.router.annotations.PathParameter;
 import com.doitnext.http.router.annotations.QueryParameter;
 import com.doitnext.http.router.annotations.Terminus;
@@ -41,6 +45,7 @@ import com.doitnext.pathutils.PathElement;
  *
  */
 public class DefaultInvoker implements MethodInvoker {
+	static Logger logger = LoggerFactory.getLogger(DefaultInvoker.class);
 	StringConversionUtil stringConverter = new StringConversionUtil();
 	public DefaultInvoker() {
 		// TODO Auto-generated constructor stub
@@ -48,7 +53,7 @@ public class DefaultInvoker implements MethodInvoker {
 
 	
 	@Override
-	public boolean invokeMethod(HttpMethod method, PathMatch pm,
+	public InvokeResult invokeMethod(HttpMethod method, PathMatch pm,
 			HttpServletRequest req, HttpServletResponse resp) 
 					throws ServletException {
 		String terminus = pm.getMatchedPath().getTerminus();
@@ -74,17 +79,32 @@ public class DefaultInvoker implements MethodInvoker {
 			// and HttpServletResponse parameters to arguments.
 			mapParametersToArguments(parameterAnnotations, parameterTypes, variableMatches,
 					req, resp, terminus, arguments);
-		
+			if(logger.isTraceEnabled()) {
+				logger.trace(String.format("Invoking %s", route));
+			}
 			Object invocationResult = implMethod.invoke(route.getImplInstance(), arguments);
-			return route.getSuccessHandler().handleResponse(pm, req, resp, invocationResult);
+			if(logger.isTraceEnabled()) {
+				ObjectMapper mapper = new ObjectMapper();
+				logger.trace(String.format("Returned %s from %s", mapper.writeValueAsString(invocationResult),
+						route));
+			}
+			if(route.getSuccessHandler().handleResponse(pm, req, resp, invocationResult))
+				return InvokeResult.METHOD_SUCCESS;
+			else
+				return InvokeResult.METHOD_SUCCESS_UNHANDLED;
 		} catch(InvocationTargetException ite) {
 			Throwable t = ite.getCause();
 			if(t == null)
 				t = ite;
-			return route.getErrorHandler().handleResponse(pm, req, resp, t);
+			if(logger.isDebugEnabled()) {
+				logger.debug("Invocation threw exception", ite);
+			}
+			if(route.getErrorHandler().handleResponse(pm, req, resp, t))
+				return InvokeResult.METHOD_ERROR;
+			else
+				return InvokeResult.METHOD_ERROR_UNHANDLED;
 		} catch(Exception e) {
-			throw new ServletException(String.format("Error invoking method '%s' in class '%s'.", 
-					implMethod.getName(), implClass.getName()), e);
+			throw new ServletException(String.format("Error invoking %s", route), e);
 		}
 	}
 	
@@ -121,7 +141,7 @@ public class DefaultInvoker implements MethodInvoker {
 			}
 			if(parameterAnnotations[x].length > 0) {
 				boolean bContinue = false;
-				for(int y = 0; y < parameterAnnotations.length; y++) {
+				for(int y = 0; y < parameterAnnotations[x].length; y++) {
 					Annotation annotation = parameterAnnotations[x][y];
 					if(annotation instanceof PathParameter) {
 						mapPathParameter((PathParameter)annotation, arguments, 
