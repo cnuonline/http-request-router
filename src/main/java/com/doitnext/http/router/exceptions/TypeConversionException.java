@@ -16,23 +16,33 @@
 package com.doitnext.http.router.exceptions;
 
 /**
- * This exception may be thrown by server side implementation methods 
- * when an update operation would result in a duplicate key constraint violation.
+ * This exception is thrown when there is an error performing a type conversion 
+ * from one data type to another.
  * 
  * @author Steve Owens (steve@doitnext.com)
- *
+ * 
  */
-public class DuplicateKeyConstraintException extends IllegalArgumentException {
+public class TypeConversionException extends Exception {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -5004612980707199832L;
+	private static final long serialVersionUID = 107299195229275323L;
 
-	/**
-	 * @param message a message that describes the reason for the error.
-	 */
-	public DuplicateKeyConstraintException(String message) {
-		super(message);
+	public TypeConversionException() {
+		super();
 	}
+
+	public TypeConversionException(String arg0, Throwable arg1) {
+		super(arg0, arg1);
+	}
+
+	public TypeConversionException(String arg0) {
+		super(arg0);
+	}
+
+	public TypeConversionException(Throwable arg0) {
+		super(arg0);
+	}
+
 }

@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2013 Steve Owens (DoItNext.com) http://www.doitnext.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.doitnext.http.router.typeconverters;
 
 import java.text.DateFormat;
@@ -8,6 +23,7 @@ import org.junit.Assert;
 
 import org.junit.Test;
 
+import com.doitnext.http.router.exceptions.TypeConversionException;
 import com.doitnext.http.router.exceptions.UnsupportedConversionException;
 
 public class StringConversionUtilTest {
@@ -35,8 +51,8 @@ public class StringConversionUtilTest {
 				{ 'c', char.class, null, "c", null},
 				{ (short)2, short.class, null, "2", null},
 				{ (byte)0x20, byte.class, null, "32", null},
-				{ null, char.class, IndexOutOfBoundsException.class, "hi", "'hi' not convertible to char"},
-				{ null, Date.class, ParseException.class, "hey fred", "Unable to parse 'hey fred' as Date"},
+				{ null, char.class, TypeConversionException.class, "hi", "Unable to convert value 'hi' into char"},
+				{ null, Date.class, TypeConversionException.class, "hey fred", "Unable to convert value 'hey fred' into java.util.Date"},
 				{ null, StringBuffer.class, UnsupportedConversionException.class, "Hi", "Unable to convert from java.lang.String to java.lang.StringBuffer."}
 		};
 		

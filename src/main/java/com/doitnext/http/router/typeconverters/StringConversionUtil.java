@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.doitnext.http.router.exceptions.TypeConversionException;
 import com.doitnext.http.router.exceptions.UnsupportedConversionException;
 
 /**
@@ -29,54 +30,54 @@ import com.doitnext.http.router.exceptions.UnsupportedConversionException;
  * @author Steve Owens (steve@doitnext.com)
  *
  */
-public class StringConversionUtil {
+public class StringConversionUtil implements TypeConversionUtil<String> {
 
-	Map<Class<?>, TypeConverter> converters = new HashMap<Class<?>,TypeConverter>();
+	Map<Class<?>, TypeConverter<String>> converters = new HashMap<Class<?>,TypeConverter<String>>();
 	public StringConversionUtil() {
-		converters.put(int.class, new TypeConverter(){
+		converters.put(int.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) {
 				return Integer.parseInt(value);
 			}
 		});
-		converters.put(long.class, new TypeConverter(){
+		converters.put(long.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) {
 				return Long.parseLong(value);
 			}
 		});
-		converters.put(boolean.class, new TypeConverter(){
+		converters.put(boolean.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) {
 				return Boolean.parseBoolean(value);
 			}
 		});
-		converters.put(byte.class, new TypeConverter(){
+		converters.put(byte.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) {
 				return Byte.parseByte(value);
 			}
 		});
 
-		converters.put(short.class, new TypeConverter(){
+		converters.put(short.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) {
 				return Short.parseShort(value);
 			}
 		});
-		converters.put(float.class, new TypeConverter(){
+		converters.put(float.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) {
 				return Float.parseFloat(value);
 			}
 		});
-		converters.put(double.class, new TypeConverter(){
+		converters.put(double.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) {
 				return Double.parseDouble(value);
 			}
 		});
-		converters.put(char.class, new TypeConverter(){
+		converters.put(char.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) {
 				if(value.length() != 1)
@@ -84,13 +85,13 @@ public class StringConversionUtil {
 				return value.charAt(0);
 			}
 		});
-		converters.put(String.class, new TypeConverter(){
+		converters.put(String.class, new TypeConverter<String>(){
 			@Override
 			public Object convert(String value) throws ParseException {
 				return value;
 			}
 		});
-		converters.put(Date.class, new TypeConverter(){
+		converters.put(Date.class, new TypeConverter<String>(){
 			DateFormat formats[] = {
 					DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL),
 					DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.LONG),
@@ -136,12 +137,25 @@ public class StringConversionUtil {
 
 	}
 	
-	public Object convert(String value, Class<?> classz) throws ParseException {
+	/* (non-Javadoc)
+	 * @see com.doitnext.http.router.typeconverters.TypeConversionUtil#convert(java.lang.String, java.lang.Class)
+	 */
+	public Object convert(String value, Class<?> classz) throws TypeConversionException {
 		if(converters.containsKey(classz)) {
-			return converters.get(classz).convert(value);
+			try {
+				return converters.get(classz).convert(value);
+			} catch (Exception e) {
+				throw new TypeConversionException(String.format("Unable to convert value '%s' into %s",
+						value, classz.getName()), e);
+			}
 		} else {
 			throw new UnsupportedConversionException(String.class, classz);
 		}
+	}
+
+	@Override
+	public boolean supports(Class<?> classz) {
+		return converters.containsKey(classz);
 	}
 
 }

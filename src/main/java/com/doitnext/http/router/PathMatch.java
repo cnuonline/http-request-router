@@ -21,11 +21,20 @@ import com.doitnext.pathutils.Path;
  * Associates a Matched path with a Route.
  * 
  * @author Steve Owens (steve@doitnext.com)
- *
+ * @see #route
+ * @see #matchedPath
  */
 public class PathMatch {
 
+	/**
+	 * A data structure that details the mapping from an Http request to an implementation method.
+	 * @See {@link Route}
+	 */
 	final private Route route;
+	/**
+	 * A data structure that holds the elements of the path matched by the {@link #route}
+	 * @See {@link Path}
+	 */
 	final private Path matchedPath;
 	/**
 	 * @param route the Route part of the association
@@ -36,13 +45,13 @@ public class PathMatch {
 		this.matchedPath = matchedPath;
 	}
 	/**
-	 * @return the route
+	 * @return the {@link #route}
 	 */
 	public Route getRoute() {
 		return route;
 	}
 	/**
-	 * @return the matchedPath
+	 * @return the {@link #matchedPath}
 	 */
 	public Path getMatchedPath() {
 		return matchedPath;

@@ -20,10 +20,9 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
  
-    <bean id="serviceToInject" class="name.kayley.httprequesthandlertest.ServiceToInjectImpl">
- 
-    <bean id="myhttprequesthandler" class="name.kayley.httprequesthandlertest.MyHttpRequestHandler">
-        <property name="serviceToInject" ref="serviceToInject">
+    <bean id="restRouter" class="com.doitnext.http.router.RestRouterServlet">
+    	<property name="restPackageRoot" value"org.my.rest.resources"/>
+    	<property name="pathPrefix" value="/myprefix"/>
     </bean>
  
 </beans>

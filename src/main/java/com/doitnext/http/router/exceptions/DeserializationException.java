@@ -16,23 +16,26 @@
 package com.doitnext.http.router.exceptions;
 
 /**
- * This exception may be thrown by server side implementation methods 
- * when an update operation would result in a duplicate key constraint violation.
+ * Thrown when deserializing an HTTP request body into a Java Object.
  * 
  * @author Steve Owens (steve@doitnext.com)
  *
  */
-public class DuplicateKeyConstraintException extends IllegalArgumentException {
-
+public class DeserializationException extends Exception {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -5004612980707199832L;
-
-	/**
-	 * @param message a message that describes the reason for the error.
-	 */
-	public DuplicateKeyConstraintException(String message) {
+	private static final long serialVersionUID = -5241901954468033077L;
+	public DeserializationException(){
+		super();
+	}
+	public DeserializationException(String message){
 		super(message);
+	}
+	public DeserializationException(String message, Throwable cause){
+		super(message, cause);
+	}
+	public DeserializationException(Throwable cause){
+		super(cause);
 	}
 }

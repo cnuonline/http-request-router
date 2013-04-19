@@ -29,12 +29,16 @@
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
+    <!--  org.springframework.web.context.support.HttpRequestHandlerServlet
+    	  delegates calls to a bean identified in the servletcontext which implements
+    	  org.springframework.web.HttpRequestHandler with a bean name that
+    	  matches the servlet-name -->
     <servlet>
-        <servlet-name>myhttprequesthandler</servlet-name>
+        <servlet-name>restRouter</servlet-name>
         <servlet-class>org.springframework.web.context.support.HttpRequestHandlerServlet</servlet-class>
     </servlet>
     <servlet-mapping>
-        <servlet-name>myhttprequesthandler</servlet-name>
-        <url-pattern>/MyServlet</url-pattern>
+        <servlet-name>restRouter</servlet-name>
+        <url-pattern>/*</url-pattern>
     </servlet-mapping>
 </web-app>

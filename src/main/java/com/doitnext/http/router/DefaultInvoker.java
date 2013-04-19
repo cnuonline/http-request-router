@@ -18,8 +18,9 @@ package com.doitnext.http.router;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -33,9 +34,15 @@ import org.slf4j.LoggerFactory;
 
 import com.doitnext.http.router.annotations.PathParameter;
 import com.doitnext.http.router.annotations.QueryParameter;
+import com.doitnext.http.router.annotations.RequestBody;
 import com.doitnext.http.router.annotations.Terminus;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
+import com.doitnext.http.router.exceptions.DeserializationException;
+import com.doitnext.http.router.exceptions.TypeConversionException;
+import com.doitnext.http.router.requestdeserializers.DefaultJsonDeserializer;
+import com.doitnext.http.router.requestdeserializers.RequestDeserializer;
 import com.doitnext.http.router.typeconverters.StringConversionUtil;
+import com.doitnext.http.router.typeconverters.TypeConversionUtil;
 import com.doitnext.pathutils.PathElement;
 
 /**
@@ -46,12 +53,58 @@ import com.doitnext.pathutils.PathElement;
  */
 public class DefaultInvoker implements MethodInvoker {
 	static Logger logger = LoggerFactory.getLogger(DefaultInvoker.class);
-	StringConversionUtil stringConverter = new StringConversionUtil();
+	
+	
+	/**
+	 * Converts path and query parameters into method argument types.
+	 */
+	TypeConversionUtil<String> stringConverter = new StringConversionUtil();
+	
+	/**
+	 * A list of {@link RequestDeserializer} implementations that the invoker can call upon to
+	 * unmarshal a request body into a data type suitable for being passed into a method argument.
+	 */
+	private List<RequestDeserializer> requestDeserializers = new ArrayList<RequestDeserializer>();
+	
 	public DefaultInvoker() {
-		// TODO Auto-generated constructor stub
+		// Start off with the known serializers
+		requestDeserializers.add(new DefaultJsonDeserializer());
 	}
 
 	
+	/**
+	 * @return the {@link #stringConverter}
+	 */
+	public TypeConversionUtil<String> getStringConverter() {
+		return stringConverter;
+	}
+
+
+	/**
+	 * @param stringConverter the {@link #stringConverter} to set
+	 */
+	public void setStringConverter(TypeConversionUtil<String> stringConverter) {
+		this.stringConverter = stringConverter;
+	}
+
+
+	/**
+	 * @return the {@link #requestDeserializers}
+	 */
+	public List<RequestDeserializer> getRequestDeserializers() {
+		return requestDeserializers;
+	}
+
+
+	/**
+	 * @param requestDeserializers the {@link #requestDeserializers} to set
+	 */
+	public void setRequestDeserializers(
+			List<RequestDeserializer> requestDeserializers) {
+		this.requestDeserializers = requestDeserializers;
+	}
+
+
 	@Override
 	public InvokeResult invokeMethod(HttpMethod method, PathMatch pm,
 			HttpServletRequest req, HttpServletResponse resp) 
@@ -68,7 +121,7 @@ public class DefaultInvoker implements MethodInvoker {
 		}
 		
 		Route route = pm.getRoute();
-		Class<?> implClass = route.getImplClass();
+		
 		Method implMethod = route.getImplMethod();
 		
 		Annotation[][] parameterAnnotations = implMethod.getParameterAnnotations();
@@ -78,7 +131,7 @@ public class DefaultInvoker implements MethodInvoker {
 			// First map annotated parameters, and HttpServletRequest 
 			// and HttpServletResponse parameters to arguments.
 			mapParametersToArguments(parameterAnnotations, parameterTypes, variableMatches,
-					req, resp, terminus, arguments);
+					req, resp, terminus, pm, arguments);
 			if(logger.isTraceEnabled()) {
 				logger.trace(String.format("Invoking %s", route));
 			}
@@ -128,7 +181,7 @@ public class DefaultInvoker implements MethodInvoker {
 	void mapParametersToArguments(Annotation[][] parameterAnnotations,
 			Class<?>[] parameterTypes, Map<String, PathElement> variableMatches,
 		    HttpServletRequest req, HttpServletResponse resp, String terminus, 
-		    Object[] arguments) throws Exception {
+		    PathMatch pm, Object[] arguments) throws Exception {
 		Map<String,String[]> queryArgs = parseQueryArgs(req);
 		for(int x = 0; x < parameterTypes.length; x++){
 			if(parameterTypes.equals(HttpServletRequest.class)) {
@@ -157,6 +210,11 @@ public class DefaultInvoker implements MethodInvoker {
 						if(parameterTypes[x].isAssignableFrom(String.class)) {
 							arguments[x] = terminus;
 						}
+					} else if(annotation instanceof RequestBody) {
+						RequestDeserializer deserializer = selectDeserializer(pm);
+						Object argument = deserializer.deserialize(req.getInputStream(), parameterTypes[x],
+								pm.getRoute().getRequestType(), req.getCharacterEncoding());
+						arguments[x] = argument;
 					}
 				}
 				if(bContinue)
@@ -165,8 +223,16 @@ public class DefaultInvoker implements MethodInvoker {
 		}
 	}
 	
+	private RequestDeserializer selectDeserializer(PathMatch pm) throws DeserializationException {
+		for(RequestDeserializer deserializer : this.requestDeserializers) {
+			//TODO: Refine this logic to be more discriminating
+			if(pm.getRoute().getRequestFormat().equalsIgnoreCase(deserializer.getRequestFormat()))
+				return deserializer;
+		}
+		throw new DeserializationException(String.format("No deserializer for content type %s", pm.getRoute().getRequestFormat()));
+	}
 	private void mapQueryParameter(QueryParameter parameterAnnotation, Object[] arguments, 
-			Class<?> parameterClass, Map<String,String[]> queryArgs, int paramIndex) throws ParseException {
+			Class<?> parameterClass, Map<String,String[]> queryArgs, int paramIndex) throws TypeConversionException {
 		String queryArg[] = queryArgs.get(parameterAnnotation.name());
 		if(!parameterClass.isArray()) {
 			if(queryArg.length > 0) {
@@ -182,7 +248,7 @@ public class DefaultInvoker implements MethodInvoker {
 	}
 
 	private void mapPathParameter(PathParameter parameterAnnotation, Object[] arguments, 
-			Class<?> parameterClass, Map<String, PathElement> variableMatches, int paramIndex) throws ParseException {
+			Class<?> parameterClass, Map<String, PathElement> variableMatches, int paramIndex) throws TypeConversionException {
 		PathElement pe = variableMatches.get(parameterAnnotation.name());
 		arguments[paramIndex] = stringConverter.convert(pe.getValue(), parameterClass);
 	}

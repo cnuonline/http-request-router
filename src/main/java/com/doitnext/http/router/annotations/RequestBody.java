@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.doitnext.http.router.exceptions;
+package com.doitnext.http.router.annotations;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * This exception may be thrown by server side implementation methods 
- * when an update operation would result in a duplicate key constraint violation.
+ * This annotation identifies a parameter in a {@link RestMethod} annotated method
+ * which is bound to the request body in an HttpServletRequest.
  * 
  * @author Steve Owens (steve@doitnext.com)
  *
  */
-public class DuplicateKeyConstraintException extends IllegalArgumentException {
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -5004612980707199832L;
-
-	/**
-	 * @param message a message that describes the reason for the error.
-	 */
-	public DuplicateKeyConstraintException(String message) {
-		super(message);
-	}
+@Target(ElementType.PARAMETER)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RequestBody {
 }

@@ -22,27 +22,75 @@ import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.PathTemplate;
 
 /**
- * Encapsulates an orderable data structure that binds a request category to a
- * specific implementation class that handles the request.
+ * <p>Encapsulates an orderable data structure that binds a request category to a
+ * specific implementation class that handles the request.</p>
  * 
  * <p>This class is Immutable and thread safe (presuming of course that 
  * java.lang.reflect.Method and java.lang.Class<> are thread safe).</p>
  * 
  * @author Steve Owens (steve@doitnext.com)
- *
+ * 
  */
 public class Route implements Comparable<Route> {
+	/**
+	 * The {@link PathTemplate} instance that is used a request URI
+	 */
 	final private PathTemplate pathTemplate;
+	/**
+	 * The {@link Class} that implements the request handler for this route.
+	 */
 	final private Class<?> implClass;
+	/**
+	 * The {@link Method} in {@link #implClass} that implements the request handler for this route. 
+	 */
 	final private Method implMethod;
+	/**
+	 * The {@link HttpMethod} provided by the {@link javax.servlet.http.HttpServletRequest}
+	 */
 	final private HttpMethod httpMethod;
+	/**
+	 * A model or schema that refines he description of the request body.  The type of the request
+	 * is independent of it's format and can be thought of as being akin to a Java Class but need
+	 * not actually be a Java Class.  It is a collection of information conforming to a particular
+	 * schema.
+	 */
 	final private String requestType;
+	/**
+	 * A model or schema that refines he description of the request body.  The type of the request
+	 * is independent of it's format and can be thought of as being akin to a Java Class but need
+	 * not actually be a Java Class.  It is a collection of information conforming to a particular
+	 * schema.
+	 */
 	final private String returnType;
+	/**
+	 * The serialization format of the request body.  This is typically the first segment of the
+	 * Content-Type header in an HTTP request.
+	 */
 	final private String requestFormat;
+	/**
+	 * The serialization format of the response body.  This is typically the first segment of one of the
+	 * elements in an Accept header in an HTTP request.
+	 */
 	final private String returnFormat;
+	/**
+	 * The {@link MethodInvoker} implementation that this route uses to invoke the handler method.
+	 */
 	final private MethodInvoker invoker;
+	/**
+	 * The actual instance of {@link Route#implClass}
+	 */
 	final private Object implInstance;
+	/**
+	 * The {@link ResponseHandler} implementation that will handle the return value of
+	 * a call to {@link #implMethod}.  If this is null then {@link #implMethod} should return
+	 * void and handle the HttpRequest directly.
+	 */
 	final private ResponseHandler successHandler;
+	/**
+	 * The {@link ResponseHandler} implementation that will handle any exception thrown by 
+	 * a call to {@link #implMethod}.  If this is null then <code>implMethod</code> should never
+	 * throw an exception but should handle the error directly, by setting up the HttpServletResponse.
+	 */
 	final private ResponseHandler errorHandler;
 	
 	
@@ -83,7 +131,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the httpMethod
+	 * @return the {@link #httpMethod}
 	 * @see #Route
 	 */
 	public HttpMethod getHttpMethod() {
@@ -91,7 +139,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the requestType
+	 * @return the {@link #requestType}
 	 * @see #Route
 	 */
 	public String getRequestType() {
@@ -99,7 +147,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the returnType
+	 * @return the {@link #returnType}
 	 * @see #Route
 	 */
 	public String getReturnType() {
@@ -107,7 +155,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the requestFormat
+	 * @return the {@link #requestFormat}
 	 * @see #Route
 	 */
 	public String getRequestFormat() {
@@ -115,7 +163,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the returnFormat
+	 * @return the {@link #returnFormat}
 	 * @see #Route
 	 */
 	public String getReturnFormat() {
@@ -123,7 +171,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the pathTemplate
+	 * @return the {@link #pathTemplate}
 	 * @see #Route
 	 */
 	public PathTemplate getPathTemplate() {
@@ -131,7 +179,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the implClass
+	 * @return the {@link #implClass}
 	 * @see #Route
 	 */
 	public Class<?> getImplClass() {
@@ -139,7 +187,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the implMethod
+	 * @return the {@link #implMethod}
 	 * @see #Route
 	 */
 	public Method getImplMethod() {
@@ -147,14 +195,14 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the invoker
+	 * @return the {@link #invoker}
 	 */
 	public MethodInvoker getInvoker() {
 		return invoker;
 	}
 
 	/**
-	 * @return the implInstance
+	 * @return the {@link #implInstance}
 	 */
 	public Object getImplInstance() {
 		return implInstance;
@@ -162,14 +210,14 @@ public class Route implements Comparable<Route> {
 
 	
 	/**
-	 * @return the successHandler
+	 * @return the {@link #successHandler}
 	 */
 	public ResponseHandler getSuccessHandler() {
 		return successHandler;
 	}
 
 	/**
-	 * @return the errorHandler
+	 * @return the {@link #errorHandler}
 	 */
 	public ResponseHandler getErrorHandler() {
 		return errorHandler;

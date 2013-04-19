@@ -15,14 +15,24 @@
  */
 package com.doitnext.http.router.typeconverters;
 
-import java.text.ParseException;
 
 /**
  * Interface for converting a String to another type.
  * 
  * @author Stephen Owens (steve@doitnext.com)
  *
+ * @param <T> the from type that this converter supports
  */
-public interface TypeConverter {
-	Object convert(String value) throws ParseException;
+public interface TypeConverter<T> {
+	/**
+	 * Converts the input value of type T into another data type representing the
+	 * same value.  Data type of the object returned is up to the implemetor of
+	 * this interface and as such this interface is designed to be used within the
+	 * context of a TypeConversionUtil implementation.
+	 * 
+	 * @param value the input value to be converted
+	 * @return an object representing the value but of a data type of the implementations choosing.
+	 * @throws Exception
+	 */
+	Object convert(T value) throws Exception;
 }
