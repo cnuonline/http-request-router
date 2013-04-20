@@ -81,8 +81,8 @@ public class DefaultErrorHandler implements ResponseHandler {
 		return false;
 	}
 	
-	private static class ErrorWrapper {
-		private final List<String> errorMessages = new ArrayList<String>();
+	public  static class ErrorWrapper {
+		public final List<String> errorMessages = new ArrayList<String>();
 		ErrorWrapper(Throwable t) {
 			errorMessages.add(String.format("%s: %s", t.getClass().getName(), t.getMessage()));
 			Throwable cause = t.getCause();

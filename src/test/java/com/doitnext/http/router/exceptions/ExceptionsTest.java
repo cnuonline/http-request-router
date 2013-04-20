@@ -16,6 +16,7 @@
 package com.doitnext.http.router.exceptions;
 
 import java.util.Arrays;
+import java.util.Date;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -55,4 +56,51 @@ public class ExceptionsTest {
 		Assert.assertEquals("HTTP 500: Internal server error.", e.getMessage());				
 	}
 
+	@Test
+	public void testTypeConversionExceptionConstructors() {
+		TypeConversionException e = new TypeConversionException();
+		Assert.assertEquals(null, e.getMessage());
+		
+		e = new TypeConversionException(new IllegalArgumentException());
+		Assert.assertNotNull(e.getCause());
+		Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
+
+		e = new TypeConversionException("Hello", new IllegalArgumentException());
+		Assert.assertNotNull(e.getCause());
+		Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
+		Assert.assertEquals("Hello", e.getMessage());
+		
+		e = new TypeConversionException("Hello");
+		Assert.assertEquals("Hello", e.getMessage());
+	}
+	
+	@Test
+	public void testDeserializationExceptionConstructors() {
+		DeserializationException e = new DeserializationException();
+		Assert.assertEquals(null, e.getMessage());
+		
+		e = new DeserializationException(new IllegalArgumentException());
+		Assert.assertNotNull(e.getCause());
+		Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
+
+		e = new DeserializationException("Hello", new IllegalArgumentException());
+		Assert.assertNotNull(e.getCause());
+		Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
+		Assert.assertEquals("Hello", e.getMessage());
+		
+		e = new DeserializationException("Hello");
+		Assert.assertEquals("Hello", e.getMessage());
+
+	}
+	
+	@Test
+	public void testUnsupportedConversionExcetpionConstructors() {
+		UnsupportedConversionException e = new UnsupportedConversionException(Date.class, boolean.class);
+		Assert.assertEquals("Unable to convert from java.util.Date to boolean.", e.getMessage());
+
+		e = new UnsupportedConversionException(Date.class, boolean.class, new IllegalArgumentException());
+		Assert.assertEquals("Unable to convert from java.util.Date to boolean.", e.getMessage());
+		Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
+
+	}
 }

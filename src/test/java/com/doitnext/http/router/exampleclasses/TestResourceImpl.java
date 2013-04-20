@@ -18,9 +18,20 @@ package com.doitnext.http.router.exampleclasses;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.doitnext.http.router.annotations.PathParameter;
+import com.doitnext.http.router.annotations.QueryParameter;
+import com.doitnext.http.router.annotations.RequestBody;
 import com.doitnext.http.router.annotations.RestMethod;
 import com.doitnext.http.router.annotations.RestResource;
+import com.doitnext.http.router.annotations.Terminus;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.exceptions.DuplicateKeyConstraintException;
 import com.doitnext.http.router.exceptions.UnrecongizedKeyException;
@@ -31,7 +42,8 @@ import com.doitnext.http.router.exceptions.UnrecongizedKeyException;
  */
 @RestResource(value="testResource1", pathprefix = "/teams")
 public class TestResourceImpl {
-
+	private final static Logger logger = LoggerFactory.getLogger(TestResourceImpl.class);
+	
 	private List<TestTeamPojo> teams = new ArrayList<TestTeamPojo>();
 	private String lastMethodCalled = null;
 	private String lastHttpMethodCalled = null;
@@ -48,8 +60,8 @@ public class TestResourceImpl {
 		return lastHttpMethodCalled;
 	}
 	
-	@RestMethod(method = HttpMethod.POST, template = "")
-	public TestTeamPojo addTeam(TestTeamPojo newTeam) {
+	@RestMethod(method = HttpMethod.POST, template = "", requestFormat="application/json")
+	public TestTeamPojo addTeam(@RequestBody TestTeamPojo newTeam) {
 		if (teams.contains(newTeam))
 			throw new DuplicateKeyConstraintException(String.format(
 					"There is already a team in the collection with key %s",
@@ -60,11 +72,11 @@ public class TestResourceImpl {
 		return newTeam;
 	}
 
-	@RestMethod(method = HttpMethod.PUT, template = "")
-	public TestTeamPojo updateTeam(TestTeamPojo teamToUpdate) {
+	@RestMethod(method = HttpMethod.PUT, template = "", requestFormat="application/json")
+	public TestTeamPojo updateTeam(@RequestBody TestTeamPojo teamToUpdate) {
 		if (!teams.contains(teamToUpdate))
 			throw new UnrecongizedKeyException(
-					String.format("No team with key %s is in the collection."));
+					String.format("No team with key %s is in the collection.", teamToUpdate.getKey()));
 		teams.remove(teamToUpdate);
 		teams.add(teamToUpdate);
 		lastMethodCalled = "updateTeam";
@@ -72,16 +84,57 @@ public class TestResourceImpl {
 		return teamToUpdate;
 	}
 
+	@RestMethod(method = HttpMethod.GET, template = "")
+	public List<TestTeamPojo> getTeams(
+			@QueryParameter(name = "teamType") String teamType,
+			@QueryParameter(name = "teamName") String teamName,
+			@QueryParameter(name = "city") String cities[]) {
+
+		List<TestTeamPojo> result = new ArrayList<TestTeamPojo>();
+		for(TestTeamPojo team : teams) {
+			boolean match = true;
+			if(!StringUtils.isEmpty(teamType))
+				if(!teamType.equals(team.getType().name()))
+					match = false;
+			if(!StringUtils.isEmpty(teamName))
+				if(!teamName.equals(team.getName()))
+					match = false;
+			
+			if(cities.length > 0) {
+				boolean found = false;
+				for(String city : cities) {
+					if(!StringUtils.isEmpty(city))
+						if(city.equals(team.getCity()))
+							found = true;
+					
+				}
+				if(!found)
+					match = false;
+			}
+			if(match == true)
+				result.add(team);
+		}
+			
+		lastMethodCalled = "getTeams";
+		lastHttpMethodCalled = "GET";
+				
+		return result;
+	}
+
 	@RestMethod(method = HttpMethod.GET, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}")
 	public TestTeamPojo getTeam(
-			@PathParameter(name = "teamType") String teamType,
-			@PathParameter(name = "teamName") String teamName) {
+			@Nonnull @PathParameter(name = "teamType") String teamType,
+			@PathParameter(name = "teamName") String teamName,
+			@Terminus String terminus) {
+		
 		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
 				.toUpperCase()), teamName);
-		if (teams.contains(key))
-			return teams.get(teams.indexOf(key));
+		logger.debug("Terminus = " + terminus);
 		lastMethodCalled = "getTeam";
 		lastHttpMethodCalled = "GET";
+
+		if (teams.contains(key))
+			return teams.get(teams.indexOf(key));
 				
 		return null;
 	}
@@ -105,15 +158,57 @@ public class TestResourceImpl {
 			@PathParameter(name = "teamName") String teamName) {
 		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
 				.toUpperCase()), teamName);
+		lastMethodCalled = "deleteTeam2";
+		lastHttpMethodCalled = "DELETE";
+		
 		return teams.remove(key);
 	}
 	
-	@RestMethod(method = HttpMethod.DELETE, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}")
+	@RestMethod(method = HttpMethod.DELETE, template = "/conflict/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}")
 	public boolean deleteTeam3(
 			@PathParameter(name = "teamType") String teamType,
 			@PathParameter(name = "teamName") String teamName) {
 		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
 				.toUpperCase()), teamName);
+
+		lastMethodCalled = "deleteTeam3";
+		lastHttpMethodCalled = "DELETE";
+
 		return teams.remove(key);
 	}
+	@RestMethod(method = HttpMethod.DELETE, template = "/conflict/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}")
+	public boolean deleteTeam4(
+			@PathParameter(name = "teamType") String teamType,
+			@PathParameter(name = "teamName") String teamName) {
+		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
+				.toUpperCase()), teamName);
+		lastMethodCalled = "deleteTeam4";
+		lastHttpMethodCalled = "DELETE";
+
+		return teams.remove(key);
+	}
+
+	@RestMethod(method = HttpMethod.GET, template = "/badTerminusArg")
+	public void badTerminusArg(@Terminus int x) {
+		throw new IllegalStateException("This method should never have been called.");
+	}
+
+	@RestMethod(method = HttpMethod.GET, template = "/rawCall")
+	public void rawCall(HttpServletRequest req, HttpServletResponse resp) {
+		lastMethodCalled = "rawCall";
+		lastHttpMethodCalled = "GET";
+	}
+
+	@RestMethod(method = HttpMethod.GET, template = "/_healthCheck")
+	public void healthCheck() {
+		lastMethodCalled = "healthCheck";
+		lastHttpMethodCalled = "GET";
+	}
+
+	@RestMethod(method = HttpMethod.GET, template = "/unannotatedParameter")
+	public void unannotatedParameter(String extraArg) {
+		lastMethodCalled = "unannotatedParameter";
+		lastHttpMethodCalled = "GET";
+	}
+
 }

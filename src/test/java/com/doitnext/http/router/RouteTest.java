@@ -41,10 +41,10 @@ public class RouteTest {
 	@Before
 	public void init() throws Exception {
 		PathTemplateParser parser = new PathTemplateParser("/", "?");
-		pt = parser.parse("/teams/baseball/players?pageSize=30&page=4");
+		pt = parser.parse("/teams/baseball/players?city=Atlanta");
 		pt2 = parser.parse("/teams/football/players");
 		implMethod = TestResourceImpl.class.getMethod("getTeam", String.class,
-				String.class);
+				String.class, String.class);
 	}
 
 	@Test

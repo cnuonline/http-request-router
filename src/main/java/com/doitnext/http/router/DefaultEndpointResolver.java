@@ -16,6 +16,7 @@
 package com.doitnext.http.router;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Component;
 import com.doitnext.http.router.annotations.RestMethod;
 import com.doitnext.http.router.annotations.RestResource;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
+import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.PathTemplate;
 import com.doitnext.pathutils.PathTemplateParser;
@@ -59,10 +61,16 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 	private Map<MethodReturnKey, ResponseHandler> successHandlers;
 	private Map<MethodReturnKey, ResponseHandler> errorHandlers;
 	private DefaultErrorHandler defaultErrorHandler = new DefaultErrorHandler();
+	private DefaultSuccessHandler defaultSuccessHandler = new DefaultSuccessHandler();
 	private PathTemplateParser pathTemplateParser = new PathTemplateParser("/","?");
 	private ApplicationContext applicationContext;
 	
 	public DefaultEndpointResolver() {
+		MethodReturnKey defaultKey = new MethodReturnKey("", "application/json");
+		errorHandlers = new HashMap<MethodReturnKey,ResponseHandler>();
+		successHandlers = new HashMap<MethodReturnKey, ResponseHandler>();
+		errorHandlers.put(defaultKey, defaultErrorHandler);
+		successHandlers.put(defaultKey, defaultSuccessHandler);
 	}
 
 	@Required
@@ -135,6 +143,8 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 						logger.debug(String.format("successHandlers = %s", successHandlers));		
 					continue;
 				}
+				// If no error handler in errorHandlers use a 
+				// default handler so we can handle errors.
 				ResponseHandler errorHandler = defaultErrorHandler;
 				if (errorHandlers.containsKey(acceptKey)) {
 					errorHandler = errorHandlers.get(acceptKey);
@@ -148,12 +158,19 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 						pathTemplate, classz, method, invoker, implInstance,
 						successHandler, errorHandler);
 				if (routes.contains(route)) {
+					Route existingRoute = null;
+					for(Route r: routes) {
+						if(r.compareTo(route) == 0){
+							existingRoute = r;
+							break;
+						}
+					}
 					logger.debug(String
-							.format("An equivalent route to %s is already in routes. Ignoring.",
-									route.toString()));
+							.format("An equivalent route to %s is already in routes. Conflicting route: %s",
+									route, existingRoute));
 				} else {
 					logger.debug(String.format("Adding route %s to routes.",
-							route.toString()));
+							route));
 					routes.add(route);
 				}
 			} catch (Exception e) {

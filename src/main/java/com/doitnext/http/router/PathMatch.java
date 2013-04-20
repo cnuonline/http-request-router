@@ -56,5 +56,18 @@ public class PathMatch {
 	public Path getMatchedPath() {
 		return matchedPath;
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{\"PathMatch\": {\"route\":\"").append(route)
+				.append("\", matchedPath\":\"").append(matchedPath).append("}");
+		return builder.toString();
+	}
+	
+	
 
 }

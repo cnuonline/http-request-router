@@ -16,6 +16,7 @@
 package com.doitnext.http.router;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import com.doitnext.http.router.annotations.Terminus;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.exceptions.DeserializationException;
 import com.doitnext.http.router.exceptions.TypeConversionException;
+import com.doitnext.http.router.exceptions.UnsupportedConversionException;
 import com.doitnext.http.router.requestdeserializers.DefaultJsonDeserializer;
 import com.doitnext.http.router.requestdeserializers.RequestDeserializer;
 import com.doitnext.http.router.typeconverters.StringConversionUtil;
@@ -132,8 +134,8 @@ public class DefaultInvoker implements MethodInvoker {
 			// and HttpServletResponse parameters to arguments.
 			mapParametersToArguments(parameterAnnotations, parameterTypes, variableMatches,
 					req, resp, terminus, pm, arguments);
-			if(logger.isTraceEnabled()) {
-				logger.trace(String.format("Invoking %s", route));
+			if(logger.isDebugEnabled()) {
+				logger.debug(String.format("Invoking %s", route));
 			}
 			Object invocationResult = implMethod.invoke(route.getImplInstance(), arguments);
 			if(logger.isTraceEnabled()) {
@@ -146,13 +148,10 @@ public class DefaultInvoker implements MethodInvoker {
 			else
 				return InvokeResult.METHOD_SUCCESS_UNHANDLED;
 		} catch(InvocationTargetException ite) {
-			Throwable t = ite.getCause();
-			if(t == null)
-				t = ite;
 			if(logger.isDebugEnabled()) {
-				logger.debug("Invocation threw exception", ite);
-			}
-			if(route.getErrorHandler().handleResponse(pm, req, resp, t))
+				logger.debug(String.format("Invocation threw a %s %s", ite.getCause().getClass().getSimpleName(), ite.getCause().getMessage()));
+			} 
+			if(route.getErrorHandler().handleResponse(pm, req, resp, ite.getCause()))
 				return InvokeResult.METHOD_ERROR;
 			else
 				return InvokeResult.METHOD_ERROR_UNHANDLED;
@@ -167,9 +166,7 @@ public class DefaultInvoker implements MethodInvoker {
 		String queryString = req.getQueryString();
 		
 		for(Entry<String,String[]> entry : parameterMap.entrySet()) {
-			if(queryString.contains(String.format("?%s=",entry.getKey()))) {
-				result.put(entry.getKey(), entry.getValue());
-			} else if(queryString.contains(String.format("&%s=",entry.getKey()))) {
+			if(queryString.contains(String.format("%s=",entry.getKey()))) {
 				result.put(entry.getKey(), entry.getValue());
 			} 
 		}
@@ -184,11 +181,11 @@ public class DefaultInvoker implements MethodInvoker {
 		    PathMatch pm, Object[] arguments) throws Exception {
 		Map<String,String[]> queryArgs = parseQueryArgs(req);
 		for(int x = 0; x < parameterTypes.length; x++){
-			if(parameterTypes.equals(HttpServletRequest.class)) {
+			if(parameterTypes[x].equals(HttpServletRequest.class)) {
 				arguments[x] = req;
 				continue;
 			}
-			if(parameterTypes.equals(HttpServletResponse.class)){
+			if(parameterTypes[x].equals(HttpServletResponse.class)){
 				arguments[x] = resp;
 				continue;
 			}
@@ -209,6 +206,8 @@ public class DefaultInvoker implements MethodInvoker {
 					} else if(annotation instanceof Terminus) {
 						if(parameterTypes[x].isAssignableFrom(String.class)) {
 							arguments[x] = terminus;
+						} else {
+							throw new UnsupportedConversionException(String.class, parameterTypes[x]);
 						}
 					} else if(annotation instanceof RequestBody) {
 						RequestDeserializer deserializer = selectDeserializer(pm);
@@ -229,19 +228,21 @@ public class DefaultInvoker implements MethodInvoker {
 			if(pm.getRoute().getRequestFormat().equalsIgnoreCase(deserializer.getRequestFormat()))
 				return deserializer;
 		}
-		throw new DeserializationException(String.format("No deserializer for content type %s", pm.getRoute().getRequestFormat()));
+		throw new DeserializationException(String.format("No deserializer for content type \"%s\"", pm.getRoute().getRequestFormat()));
 	}
 	private void mapQueryParameter(QueryParameter parameterAnnotation, Object[] arguments, 
 			Class<?> parameterClass, Map<String,String[]> queryArgs, int paramIndex) throws TypeConversionException {
 		String queryArg[] = queryArgs.get(parameterAnnotation.name());
+		if(queryArg == null)
+			return;
 		if(!parameterClass.isArray()) {
 			if(queryArg.length > 0) {
 				arguments[paramIndex] = stringConverter.convert(queryArg[0], parameterClass);
 			}
 		} else {
-			Object queryParam[] = new Object[queryArg.length];
+			Object queryParam = Array.newInstance(parameterClass.getComponentType(), queryArg.length);
 			for(int x = 0; x < queryArg.length; x++) {
-				queryParam[x] = stringConverter.convert(queryArg[x], parameterClass.getComponentType());
+				Array.set(queryParam, x, stringConverter.convert(queryArg[x], parameterClass.getComponentType()));
 			}
 			arguments[paramIndex] = queryParam;
 		}	

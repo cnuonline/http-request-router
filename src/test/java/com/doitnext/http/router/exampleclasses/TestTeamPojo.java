@@ -20,19 +20,24 @@ package com.doitnext.http.router.exampleclasses;
  *
  */
 public class TestTeamPojo {
-	public enum Type { BASEBALL, FOOTBALL, BASKETBALL };
+	public enum Type { BASEBALL, FOOTBALL, BASKETBALL, ROLLERDERBY, LACROSSE, SWIM };
 	
 	// Keys
-	private final Type type;
-	private final String name;
+	private Type type;
+	private String name;
 	
 	// Derived values
-	private final String key;
+	private String key;
 	
 	// Mutable values
 	private  String league;
 	private String city;
 	
+	// For Jacksons Sake
+	@SuppressWarnings("unused")
+	private TestTeamPojo(){
+		
+	}
 	public TestTeamPojo (Type type, String name) {
 		this.type = type;
 		this.name = name;

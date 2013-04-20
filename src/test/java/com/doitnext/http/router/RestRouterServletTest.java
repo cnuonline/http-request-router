@@ -15,26 +15,88 @@
  */
 package com.doitnext.http.router;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-
+import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+
+import com.doitnext.http.router.exampleclasses.TestResourceImpl;
+import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
+import com.doitnext.http.router.responsehandlers.ResponseHandler;
 
 public class RestRouterServletTest {
 
 	public RestRouterServletTest() {
 		// TODO Auto-generated constructor stub
 	}
+	
+	private TestResourceImpl resourceImp = new TestResourceImpl();
+	private DefaultEndpointResolver endpointResolver = new DefaultEndpointResolver();
+	private ApplicationContext applicationContext = mock(ApplicationContext.class);
+	private MethodInvoker methodInvoker = new DefaultInvoker();
+	private ResponseHandler errorHandler = new DefaultErrorHandler();
+	@Before
+	public void init() {
+		endpointResolver.setApplicationContext(applicationContext);
+		when(applicationContext.getBean("testResource1",TestResourceImpl.class)).thenReturn(resourceImp);
+	}
 
 	@Test
-	public void testHandleRequestHappyCase() throws Exception {
+	public void testHandleRequestHappyCases() throws Exception {
 		RestRouterServlet servlet = new RestRouterServlet();
-		servlet.setPathPrefix("");
-		servlet.setRestPackageRoot("com.doitnext.http.router.testclasses");
+		servlet.setPathPrefix("/sports-api");
+		servlet.setRestPackageRoot("com.doitnext.http.router.exampleclasses");
+		servlet.setEndpointResolver(endpointResolver);
+		servlet.setMethodInvoker(methodInvoker);
+		servlet.setErrorHandler(errorHandler);
+		servlet.setDynamicEndpointResolver(null);
+		servlet.afterPropertiesSet();
 		
+		MockHttpServletRequest request;
+		MockHttpServletResponse response;
+		
+		Object[][] testCases = {
+			{"GET", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", null}
+		};
+		
+		for(Object[] testCase : testCases) {
+			request = new MockHttpServletRequest();
+			response = new MockHttpServletResponse();
+			setUpRequest(testCase, request);
+			servlet.handleRequest(request, response);
+		}
 	}
 	
-	
+	private void setUpRequest(Object[] testCase, MockHttpServletRequest request) {
+		String httpMethod = (String)testCase[0];
+		String pathPrefix = (String)testCase[1];
+		String pathInfo = (String)testCase[2];
+		String queryString = (String)testCase[3];
+		String parts[] = queryString.split("&");
+		String acceptHeader = (String) testCase[4];
+		String contentTypeHeader = (String) testCase[5];
+		
+		request.setServletPath("");
+		request.setContextPath(pathPrefix);
+		request.setPathInfo(pathInfo);
+		request.setMethod(httpMethod);
+		request.setQueryString(queryString);
+		for(String part : parts) {
+			String pieces[] = part.split("=");
+			if(pieces.length > 1)
+				request.addParameter(pieces[0], pieces[1]);
+		}
+		if(acceptHeader != null)
+			request.addHeader("Accept", acceptHeader);
+		if(contentTypeHeader != null)
+			request.setContentType(contentTypeHeader);
+		
+		
+	}
 	
 	
 	

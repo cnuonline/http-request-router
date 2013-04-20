@@ -73,4 +73,11 @@ public class StringConversionUtilTest {
 			}
 		}
 	}
+	
+	@Test
+	public void testSupports() {
+		StringConversionUtil converter = new StringConversionUtil();
+		Assert.assertTrue(converter.supports(int.class));
+		Assert.assertFalse(converter.supports(this.getClass()));
+	}
 }

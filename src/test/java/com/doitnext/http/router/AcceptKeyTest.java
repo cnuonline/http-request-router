@@ -47,7 +47,7 @@ public class AcceptKeyTest {
 		pt = parser.parse("/teams/baseball/players?pageSize=30&page=4");
 		pt2 = parser.parse("/teams/football/players");
 		implMethod = TestResourceImpl.class.getMethod("getTeam", String.class,
-				String.class);
+				String.class, String.class);
 		path = pt.match("/teams/baseball/players");
 		route = new Route(HttpMethod.OPTIONS,
 				"T", "T", "application/JSON", "application/JSON", pt, 
