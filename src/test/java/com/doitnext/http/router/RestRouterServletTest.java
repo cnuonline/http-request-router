@@ -18,13 +18,18 @@ package com.doitnext.http.router;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.exampleclasses.TestResourceImpl;
+import com.doitnext.http.router.exampleclasses.TestTeamPojo;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
 
@@ -39,6 +44,8 @@ public class RestRouterServletTest {
 	private ApplicationContext applicationContext = mock(ApplicationContext.class);
 	private MethodInvoker methodInvoker = new DefaultInvoker();
 	private ResponseHandler errorHandler = new DefaultErrorHandler();
+	private Map<String, TestTeamPojo> pojos = new HashMap<String, TestTeamPojo>();
+	
 	@Before
 	public void init() {
 		endpointResolver.setApplicationContext(applicationContext);
@@ -60,7 +67,11 @@ public class RestRouterServletTest {
 		MockHttpServletResponse response;
 		
 		Object[][] testCases = {
-			{"GET", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", null}
+			{"GET", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", null, null},
+			{"GET", "/mocker", "/teams","city=Atlanta", "application/json, application/xml", null, null},
+			{"POST", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", null, pojos.get("Cardinals-FOOTBALL")},
+			{"POST", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", "application/xml", pojos.get("Cardinals-FOOTBALL")},
+			{"POST", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", "application/json", pojos.get("Cardinals-FOOTBALL")},
 		};
 		
 		for(Object[] testCase : testCases) {
@@ -94,10 +105,20 @@ public class RestRouterServletTest {
 			request.addHeader("Accept", acceptHeader);
 		if(contentTypeHeader != null)
 			request.setContentType(contentTypeHeader);
-		
-		
+		HttpMethod mthd = HttpMethod.valueOf(httpMethod);
+		if(mthd == HttpMethod.POST || mthd == HttpMethod.PUT ) {
+			
+		}
 	}
 	
-	
+	private void initPojos() {
+		pojos.put("Cardinals-FOOTBALL",
+				new TestTeamPojo(TestTeamPojo.Type.FOOTBALL, "Cardinals"));
+		pojos.put("RedSox-BASEBALL",
+				new TestTeamPojo(TestTeamPojo.Type.BASEBALL, "RedSox"));
+		
+		pojos.get("Cardinals-FOOTBALL").setCity("Cincinatti");
+		pojos.get("RedSox-BASEBALL").setCity("Boston");
+	}
 	
 }

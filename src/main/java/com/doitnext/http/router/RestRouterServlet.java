@@ -122,6 +122,9 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean {
 
 	protected boolean do404(HttpMethod method, HttpServletRequest req,
 			HttpServletResponse resp) {
+		if(logger.isTraceEnabled()){
+			logger.trace(String.format("%s %s returns 404", method.name(), req.getRequestURI()));
+		}
 		resp.setStatus(404);
 		return errorHandler.handleResponse(null, req, resp,
 				new Http404Exception(req.getRequestURI()));

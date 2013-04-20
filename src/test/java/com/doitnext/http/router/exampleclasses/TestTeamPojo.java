@@ -35,7 +35,7 @@ public class TestTeamPojo {
 	
 	// For Jacksons Sake
 	@SuppressWarnings("unused")
-	private TestTeamPojo(){
+	TestTeamPojo(){
 		
 	}
 	public TestTeamPojo (Type type, String name) {
