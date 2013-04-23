@@ -184,8 +184,8 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 
 			if (!successHandlers.containsKey(acceptKey)) {
 				logger.error(String
-						.format("No response handler for method with %s",
-								acceptKey));
+						.format("No response handler for method with %s in success handlers %s",
+								acceptKey, successHandlers));
 				if(logger.isDebugEnabled())
 					logger.debug(String.format("successHandlers = %s", successHandlers));		
 				return;

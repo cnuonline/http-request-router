@@ -107,4 +107,17 @@ public final class AcceptKey {
 		// No match
 		return false;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("AcceptKey [returnType=").append(returnType)
+				.append(", returnFormat=").append(returnFormat).append("]");
+		return builder.toString();
+	}
+	
+	
 }

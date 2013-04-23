@@ -27,8 +27,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,21 +170,23 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 		String pathString = req.getPathInfo();
 		for (Route route : routes) {
 			if(logger.isTraceEnabled()){
-				logger.trace(String.format("Trying to match '%s' against '%s'",
-						route.getPathTemplate().getLexicalPath(), pathString));
+				logger.trace(String.format("Trying to match path '%s' against '%s'",
+						pathString, route.toString() ));
 			}
 			Path path = route.getPathTemplate().match(pathString);
 			if (path != null) {
 				if(logger.isTraceEnabled()) {
-					logger.trace(String.format("Matched '%s' against '%s'",
-							route.getPathTemplate().getLexicalPath(), pathString));
+					logger.trace(String.format("Matched path '%s' against '%s'",
+							pathString, route ));
 				}
 				pathMatches.add(new PathMatch(route, path));
 			}
 		}
 		if (pathMatches.isEmpty())
 			return do404(method, req, resp); // Resource not found
-
+		else if(logger.isTraceEnabled())
+			logger.trace(String.format("There are %d routes that match by uri path.", pathMatches.size()));
+			
 		String acceptTypes = req.getHeader("Accept");
 		String accepts[] = acceptTypes.split(",");
 		List<AcceptKey> acceptKeys = new ArrayList<AcceptKey>();
@@ -195,39 +196,91 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 		List<PathMatch> pathMatchesByResponseType = new ArrayList<PathMatch>();
 		for (PathMatch pm : pathMatches) {
 			for (AcceptKey acceptKey : acceptKeys) {
-				if (acceptKey.matches(pm.getRoute()))
+				if (acceptKey.matches(pm.getRoute())) {
 					pathMatchesByResponseType.add(pm);
+					if(logger.isTraceEnabled()) {
+						logger.trace(String.format("Accept key: %s matches route %s", acceptKey, pm.getRoute()));
+					}
+				} else if(logger.isTraceEnabled()) {
+					logger.trace(String.format("Accept key: %s does not match route %s.  This route will be excluded from further consideration.", acceptKey, pm.getRoute()));
+				}
 			}
 		}
 		if (pathMatchesByResponseType.isEmpty())
 			return do406(method, req, resp);
+		else if(logger.isTraceEnabled())
+			logger.trace(String.format("There are %d routes that match by response type.", pathMatchesByResponseType.size()));
 
 		List<PathMatch> pathMatchesByContentType = new ArrayList<PathMatch>();
 		String contentTypeHeader = req.getHeader("Content-Type");
 		ContentTypeKey contentTypeKey = new ContentTypeKey(contentTypeHeader);
 		for (PathMatch pm : pathMatchesByResponseType) {
 			Route route = pm.getRoute();
-			if (contentTypeKey.matches(route))
+			if (contentTypeKey.matches(route)){
 				pathMatchesByContentType.add(pm);
+				if(logger.isTraceEnabled()) {
+					logger.trace(String.format("Content type key: %s matches route %s", contentTypeKey, pm.getRoute()));
+				} else if(logger.isTraceEnabled()) {
+					logger.trace(String.format("Content type key: %s does not match route %s.  This route will be excluded from further consideration.", contentTypeKey, pm.getRoute()));
+				}
+			}
 		}
 		if (pathMatchesByContentType.isEmpty())
 			return do415(method, req, resp);
+		else if(logger.isTraceEnabled()){
+			logger.trace(String.format("There are %d routes that match by request type.", pathMatchesByContentType.size()));
+		}
 
+		List<PathMatch> pathMatchesFinalCandidates = new ArrayList<PathMatch>();
 		Set<HttpMethod> allowedMethods = new TreeSet<HttpMethod>();
 		for (PathMatch pm : pathMatchesByContentType) {
-			if (pm.getRoute().getHttpMethod().equals(method))
-				try {
-					return methodInvoker.invokeMethod(method, pm, req, resp).handled;
-				} catch (Throwable t) {
-					return do500(method, req, resp, t);
+			if (pm.getRoute().getHttpMethod().equals(method)){
+				pathMatchesFinalCandidates.add(pm);
+				if(logger.isTraceEnabled()) {
+					logger.trace(String.format("Http request method: %s matches route %s", method.name(), pm.getRoute()));
 				}
-			else
+			} else {
 				allowedMethods.add(pm.getRoute().getHttpMethod());
+				if(logger.isTraceEnabled()) {
+					logger.trace(String.format("Http request method: %s does not match route %s.  This route will be excluded from further consideration.", method.name(), pm.getRoute()));
+				}				
+			}
 		}
-		List<String> am = new ArrayList<String>();
-		for (HttpMethod m : allowedMethods)
-			am.add(m.name());
-		return do405(method, am, req, resp);
+		
+		if(pathMatchesFinalCandidates.isEmpty()) {
+			List<String> am = new ArrayList<String>();
+			for (HttpMethod m : allowedMethods)
+				am.add(m.name());
+			return do405(method, am, req, resp);
+		}
+		
+		if(logger.isTraceEnabled()){
+			logger.trace(String.format("There are %d routes that match by all criteria selecting most specific route.", pathMatchesFinalCandidates.size()));
+		}
+		PathMatch selectedMatch = pathMatchesFinalCandidates.get(0);
+		for(PathMatch pm : pathMatchesFinalCandidates) {
+			PathMatch prelimSelection = selectedMatch;
+			if(pm != selectedMatch){
+				if(StringUtils.isEmpty(selectedMatch.getRoute().getReturnType())
+					&& !StringUtils.isEmpty(pm.getRoute().getReturnType())){
+					selectedMatch = pm;
+				} else if(StringUtils.isEmpty(selectedMatch.getRoute().getRequestType()) 
+						&& !StringUtils.isEmpty(pm.getRoute().getRequestType())) {
+						selectedMatch = pm;
+				}
+			}
+			if(logger.isTraceEnabled() && prelimSelection != selectedMatch){
+				logger.trace(String.format("Route %s is more specific than %s", selectedMatch, prelimSelection));
+			}
+		}
+		if(logger.isTraceEnabled())
+			logger.trace(String.format("Route chosen for invocation %s", selectedMatch));
+		try {
+			return methodInvoker.invokeMethod(method, selectedMatch, req, resp).handled;
+		} catch (Throwable t) {
+			return do500(method, req, resp, t);
+		}
+		
 	}
 
 	@Override

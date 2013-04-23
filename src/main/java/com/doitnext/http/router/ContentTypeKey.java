@@ -116,5 +116,17 @@ public class ContentTypeKey {
 		}
 		return false;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ContentTypeKey [requestType=").append(requestType)
+				.append(", requestFormat=").append(requestFormat).append("]");
+		return builder.toString();
+	}
+	
 	
 }
