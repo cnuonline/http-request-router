@@ -21,6 +21,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -33,6 +37,7 @@ import org.springframework.stereotype.Component;
 
 import com.doitnext.http.router.annotations.RestMethod;
 import com.doitnext.http.router.annotations.RestResource;
+import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
@@ -64,6 +69,7 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 	private DefaultSuccessHandler defaultSuccessHandler = new DefaultSuccessHandler();
 	private PathTemplateParser pathTemplateParser = new PathTemplateParser("/","?");
 	private ApplicationContext applicationContext;
+	private EndpointDumper endpointDumper;
 	
 	public DefaultEndpointResolver() {
 		MethodReturnKey defaultKey = new MethodReturnKey("", "application/json");
@@ -88,6 +94,10 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 	public void setErrorHandlers(Map<MethodReturnKey, ResponseHandler> errorHandlers) {
 		this.errorHandlers = errorHandlers;
 	}
+	
+	public void setEndpointDumper(EndpointDumper endpointDumper){
+		this.endpointDumper = endpointDumper;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -98,6 +108,8 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 	 */
 	public ImmutableSortedSet<Route> resolveEndpoints(String pathPrefix,
 			String basePackage) {
+		if(this.applicationContext == null)
+			throw new IllegalStateException("No applicationContext set.");
 		TreeSet<Route> result = new TreeSet<Route>();
 		logger.debug(String.format("Scanning %s for @EndpointImpl classes.",
 				basePackage));
@@ -129,84 +141,119 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 			RestMethod methodImpl = method.getAnnotation(RestMethod.class);
 			pathBuilder = new StringBuilder(resourcePathPrefix);
 			pathBuilder.append(methodImpl.template());
-			try {
-				PathTemplate pathTemplate = pathTemplateParser.parse(pathBuilder.toString());
-				
-				Object implInstance = applicationContext.getBean(resource.value(), classz);
-				MethodReturnKey acceptKey = new MethodReturnKey(methodImpl.returnType(),
-						methodImpl.returnFormat());
-				if (!successHandlers.containsKey(acceptKey)) {
-					logger.error(String
-							.format("No response handler for method with %s",
-									acceptKey));
-					if(logger.isDebugEnabled())
-						logger.debug(String.format("successHandlers = %s", successHandlers));		
-					continue;
+			Object implInstance = applicationContext.getBean(resource.value(), classz);
+			RequestResponseContext rrCtx = 
+					new RequestResponseContext(new InheritableValue(resource.requestType(), methodImpl.requestType()),
+							new InheritableValue(resource.returnType(), methodImpl.returnType()),
+							new InheritableValue(resource.requestFormat(), methodImpl.requestFormat()),
+							new InheritableValue(resource.returnFormat(), methodImpl.returnFormat()));
+			
+			addMethodToRoutes(pathBuilder.toString(), implInstance, rrCtx, method, classz, methodImpl.method(), routes);
+		}
+		
+		// Add dump routes to the set
+		if(endpointDumper != null) {
+			for(String returnFormat : endpointDumper.getReturnFormats()) {
+				pathBuilder = new StringBuilder("endpoints_");
+				Object implInstance = this;
+				RequestResponseContext rrCtx = 
+						new RequestResponseContext(new InheritableValue("", ""),
+								new InheritableValue("", ""),
+								new InheritableValue("", ""),
+								new InheritableValue(returnFormat, returnFormat));
+				try {
+					Method method = endpointDumper.getClass().getMethod("dumpEndpoints", HttpServletRequest.class, HttpServletResponse.class);
+					addMethodToRoutes(pathBuilder.toString(), implInstance, rrCtx, method, 
+							endpointDumper.getClass(), HttpMethod.GET, routes);		
+				} catch (SecurityException e) {
+					logger.error("Unable to add endpoint dump", e);
+				} catch (NoSuchMethodException e) {
+					logger.error("Unable to add endpoint dump", e);
 				}
-				// If no error handler in errorHandlers use a 
-				// default handler so we can handle errors.
-				ResponseHandler errorHandler = defaultErrorHandler;
-				if (errorHandlers.containsKey(acceptKey)) {
-					errorHandler = errorHandlers.get(acceptKey);
-				}
-				ResponseHandler successHandler = successHandlers.get(acceptKey);
-				Route route = new Route(methodImpl.method(),
-						resolveRequestType(resource, methodImpl),
-						resolveReturnType(resource, methodImpl),
-						resolveRequestFormat(resource, methodImpl),
-						resolveReturnFormat(resource, methodImpl),
-						pathTemplate, classz, method, invoker, implInstance,
-						successHandler, errorHandler);
-				if (routes.contains(route)) {
-					Route existingRoute = null;
-					for(Route r: routes) {
-						if(r.compareTo(route) == 0){
-							existingRoute = r;
-							break;
-						}
-					}
-					logger.debug(String
-							.format("An equivalent route to %s is already in routes. Conflicting route: %s",
-									route, existingRoute));
-				} else {
-					logger.debug(String.format("Adding route %s to routes.",
-							route));
-					routes.add(route);
-				}
-			} catch (Exception e) {
-				logger.error(
-						String.format("Error addding route for %s.%s",
-								classz.getName(), method.getName()), e);
 			}
 		}
 	}
 
-	private String resolveReturnFormat(RestResource res, RestMethod mthd) {
-		if (mthd.requestFormat().trim().isEmpty())
-			return res.returnFormat();
-		else
-			return mthd.returnFormat();
-	}
+	private void addMethodToRoutes(String path, Object implInstance, RequestResponseContext rrCtx,
+			Method implMethod, Class<?> implClass, HttpMethod httpMethod,
+			TreeSet<Route> routes) {
+		try {
+			PathTemplate pathTemplate = pathTemplateParser.parse(path);
+			MethodReturnKey acceptKey = new MethodReturnKey(rrCtx.responseType.resolve(),
+					rrCtx.responseFormat.resolve());
 
-	private String resolveRequestFormat(RestResource res, RestMethod mthd) {
-		if (mthd.requestFormat().trim().isEmpty())
-			return res.requestFormat();
-		else
-			return mthd.requestFormat();
+			if (!successHandlers.containsKey(acceptKey)) {
+				logger.error(String
+						.format("No response handler for method with %s",
+								acceptKey));
+				if(logger.isDebugEnabled())
+					logger.debug(String.format("successHandlers = %s", successHandlers));		
+				return;
+			}
+			// If no error handler in errorHandlers use a 
+			// default handler so we can handle errors.
+			ResponseHandler errorHandler = defaultErrorHandler;
+			if (errorHandlers.containsKey(acceptKey)) {
+				errorHandler = errorHandlers.get(acceptKey);
+			}
+			ResponseHandler successHandler = successHandlers.get(acceptKey);
+			Route route = new Route(httpMethod,
+					rrCtx.requestType.resolve(), rrCtx.responseType.resolve(),
+					rrCtx.requestFormat.resolve(), rrCtx.responseFormat.resolve(),
+					pathTemplate, implClass, implMethod, invoker, implInstance,
+					successHandler, errorHandler);
+			if (routes.contains(route)) {
+				Route existingRoute = null;
+				for(Route r: routes) {
+					if(r.compareTo(route) == 0){
+						existingRoute = r;
+						break;
+					}
+				}
+				logger.debug(String
+						.format("An equivalent route to %s is already in routes. Conflicting route: %s",
+								route, existingRoute));
+			} else {
+				logger.debug(String.format("Adding route %s to routes.",
+						route));
+				routes.add(route);
+			}
+		} catch (Exception e) {
+			logger.error(
+					String.format("Error addding route for %s.%s",
+							implClass.getName(), implMethod.getName()), e);
+		}
 	}
-
-	private String resolveReturnType(RestResource res, RestMethod mthd) {
-		if (mthd.returnType().trim().isEmpty())
-			return res.returnType();
-		else
-			return mthd.returnType();
+	
+	private static class InheritableValue {
+		final String defaultValue;
+		final String value;
+		InheritableValue(String defaultValue, String value){
+			this.defaultValue = defaultValue;
+			this.value = value;
+			
+		}
+		 String resolve() {
+			if (StringUtils.isEmpty(value))
+				return defaultValue;
+			else
+				return value;
+		}	
 	}
-
-	private String resolveRequestType(RestResource res, RestMethod mthd) {
-		if (mthd.requestType().trim().isEmpty())
-			return res.requestType();
-		else
-			return mthd.requestType();
+	private static class RequestResponseContext {
+		final InheritableValue requestType;
+		final InheritableValue responseType;
+		final InheritableValue requestFormat;
+		final InheritableValue responseFormat;
+		
+		public RequestResponseContext(InheritableValue requestType,
+				InheritableValue responseType, InheritableValue requestFormat,
+				InheritableValue responseFormat){
+			this.requestFormat = requestFormat;
+			this.requestType = requestType;
+			this.responseFormat = responseFormat;
+			this.responseType = responseType;
+		}
 	}
 
 	@Override

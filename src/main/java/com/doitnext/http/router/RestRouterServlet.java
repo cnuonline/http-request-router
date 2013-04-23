@@ -17,6 +17,7 @@ package com.doitnext.http.router;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -43,7 +44,7 @@ import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.Path;
 import com.google.common.collect.ImmutableSortedSet;
 
-public class RestRouterServlet implements HttpRequestHandler, InitializingBean {
+public class RestRouterServlet implements HttpRequestHandler, InitializingBean, EndpointDumper {
 
 	/**
 	 * Serial version id for this servlet
@@ -165,8 +166,16 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean {
 		List<PathMatch> pathMatches = new ArrayList<PathMatch>();
 		String pathString = req.getPathInfo();
 		for (Route route : routes) {
+			if(logger.isTraceEnabled()){
+				logger.trace(String.format("Trying to match '%s' against '%s'",
+						route.getPathTemplate().getLexicalPath(), pathString));
+			}
 			Path path = route.getPathTemplate().match(pathString);
 			if (path != null) {
+				if(logger.isTraceEnabled()) {
+					logger.trace(String.format("Matched '%s' against '%s'",
+							route.getPathTemplate().getLexicalPath(), pathString));
+				}
 				pathMatches.add(new PathMatch(route, path));
 			}
 		}
@@ -223,5 +232,16 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean {
 		HttpMethod httpMethod = HttpMethod.valueOf(request.getMethod().toUpperCase());
 		if(!routeRequest(httpMethod, request, response))
 			logger.error(String.format("Failed to handle %s request.", httpMethod.name()));
+	}
+	
+	@Override
+	public List<String> getReturnFormats() {
+		return Arrays.asList("application/json");
+	}
+
+	@Override
+	public void dumpEndpoints(HttpServletRequest req, HttpServletResponse resp) {
+		// TODO: Implement this
+		
 	}
 }
