@@ -27,6 +27,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -66,6 +69,7 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 	private MethodInvoker methodInvoker = new DefaultInvoker();
 	private EndpointResolver endpointResolver = new DefaultEndpointResolver();
 	private ResponseHandler errorHandler = new DefaultErrorHandler();
+	private ObjectMapper objectMapper = new ObjectMapper();
 	
 	public RestRouterServlet() {
 	}
@@ -240,8 +244,16 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 	}
 
 	@Override
-	public void dumpEndpoints(HttpServletRequest req, HttpServletResponse resp) {
-		// TODO: Implement this
-		
+	public void dumpEndpoints(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+		List<String> endpointPaths = new ArrayList<String>();
+		for(Route route : this.routes) {
+			endpointPaths.add(route.getPathTemplate().getLexicalPath());
+		}
+		resp.setStatus(200);
+		byte bytes[] = objectMapper.writeValueAsBytes(endpointPaths);
+		resp.setContentLength(bytes.length);
+		resp.setContentType("application/json");
+		resp.getOutputStream().write(bytes);
+		resp.getOutputStream().close();
 	}
 }
