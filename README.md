@@ -177,3 +177,99 @@ In your webapp/WEB-INF/servletContext.xml file you can do something like this:
 
 </beans>
 ```
+
+Here is an example of a resource. This example provides an example of a resource that has a many to one relationship
+with a parent resource.  The MyResource class enables basic CRUD operations with a couple special getters for rapid
+UI develpment using tools such as JSON Forms or Alpaca.js.
+
+```java
+@Service(value="MyResource")
+@RestResource(value="MyResource", pathprefix = "/my-resource")
+public class MyResource {
+	static ObjectMapper objectMapper = new ObjectMapper();
+
+	@Autowired
+	MyResourceRepository myResourceRepository;
+	
+	@Autowired
+	MyParentResourceRepository myParentResourceRepository;
+	
+	@RestMethod(method = HttpMethod.POST, template = "", requestFormat="application/json")
+	public MyResource createCatalogEntry(@RequestBody MyResource myResource) {
+		myResource.setId(null);
+		
+		MyParentResource parentResource = myParentResourceRepository.findOne(myResource.getParentResourceId());
+		if(parentResource == null)
+			throw new InvalidRelationshipException(String.format("A resource must be bound to an parent resource on creation.  No MyParentResource found for parentResourceId '%s'.", myResource.getParentResourceId()));
+		
+		return myResourceRepository.save(myResource);
+	}
+	
+	@RestMethod(method = HttpMethod.PUT, template = "", requestFormat="application/json")
+	public MyResource updateResource(@RequestBody MyResource myResource) {
+		MyResource existing = myResourceRepository.findOne(myResource.getId());
+				
+		if(existing == null)
+			throw new ItemNotFoundException(myResource.getId(), MyResource.class);
+		
+		// When updating a resource, make sure it remains bound to the same Parent Resource as
+		// that it was bound to when first created.
+		if(myResource.getParentResourceId().equals(existing.getParentResourceId())) {
+			throw new InvalidModificationException(String.format("Changing the parentResourceId on a resource update is not permitted. Old id '%s', attempted new id '%s'.  Resource must be bound to an parent resource on creation."));
+		}
+			
+			
+		return myResourceRepository.save(myResource);
+	}
+	
+	@RestMethod(method = HttpMethod.GET, template = "", returnFormat="application/json", returnType="json.schema")
+	public void getResourceSchema(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		InputStream is = MyResource.class.getResourceAsStream("MyResource.schema.json");
+		byte[] bytes = IOUtils.toByteArray(is);
+		response.setContentType("application/json");
+		response.setCharacterEncoding("UTF-8");
+		response.setContentLength(bytes.length);
+		response.setStatus(200);
+		response.getOutputStream().write(bytes);
+		response.getOutputStream().close();
+	}
+	
+	@RestMethod(method = HttpMethod.GET, template = "/{id:[a-f0-9]{12,12}:OBJECTID}")
+	public MyResource getResource(@PathParameter(name = "id") String id) {
+		return myResourceRepository.findOne(id);
+	}
+	
+	@RestMethod(method = HttpMethod.GET, template = "/{id:[a-f0-9]{12,12}:OBJECTID}",
+			returnFormat="application/json", returnType="alpaca.form")
+	public void getResourceAsAlpaca(@PathParameter(name = "id") String id,
+			HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		MyResource myResource = getResource(id);
+		JsonNode schemaNode = objectMapper.readTree(MyResource.class.getResourceAsStream("MyResource.schema.json"));
+		JsonNode optionsNode = objectMapper.readTree(MyResource.class.getResourceAsStream("MyResource.options.json"));
+		JsonNode dataNode = objectMapper.readTree("null");
+		if(myResource != null) {
+			dataNode = objectMapper.readTree(objectMapper.writeValueAsBytes(myResource));
+		} 
+		Map<String, JsonNode> result = new HashMap<String,JsonNode>();
+		result.put("data", dataNode);
+		result.put("options", optionsNode);
+		result.put("schema", schemaNode);
+		byte resultBytes[] = objectMapper.writeValueAsBytes(result);
+		resp.setContentLength(resultBytes.length);
+		resp.setContentType("application/json; model=alpaca.form");
+		resp.setStatus(200);
+		resp.getOutputStream().write(resultBytes);
+		resp.getOutputStream().close();
+		
+	}
+
+	@RestMethod(method = HttpMethod.DELETE, template = "/{id:[a-f0-9]{12,12}:OBJECTID}")
+	public boolean deleteResource(@PathParameter(name = "id") String id) {
+		boolean result = (myResourceRepository.findOne(id) != null);
+		myResourceRepository.delete(id);
+		return result;
+	}
+
+}
+
+```
