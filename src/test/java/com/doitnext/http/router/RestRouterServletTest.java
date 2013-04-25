@@ -21,6 +21,9 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Assert;
+
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
@@ -28,9 +31,10 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
-import com.doitnext.http.router.exampleclasses.TestResourceImpl;
+import com.doitnext.http.router.exampleclasses.TestCollectionImpl;
 import com.doitnext.http.router.exampleclasses.TestTeamPojo;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
+import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
 
 public class RestRouterServletTest {
@@ -39,17 +43,26 @@ public class RestRouterServletTest {
 		// TODO Auto-generated constructor stub
 	}
 	
-	private TestResourceImpl resourceImp = new TestResourceImpl();
+	private TestCollectionImpl resourceImp = new TestCollectionImpl();
 	private DefaultEndpointResolver endpointResolver = new DefaultEndpointResolver();
 	private ApplicationContext applicationContext = mock(ApplicationContext.class);
 	private MethodInvoker methodInvoker = new DefaultInvoker();
 	private ResponseHandler errorHandler = new DefaultErrorHandler();
 	private Map<String, TestTeamPojo> pojos = new HashMap<String, TestTeamPojo>();
+	private ObjectMapper objectMapper = new ObjectMapper();
 	
 	@Before
 	public void init() {
+		Map<MethodReturnKey, ResponseHandler> successHandlers = new HashMap<MethodReturnKey, ResponseHandler>();
+		ResponseHandler successHandlerJson = new DefaultSuccessHandler();
+		successHandlers.put(new MethodReturnKey("", "application/json"),
+				successHandlerJson);
+		successHandlers.put(new MethodReturnKey("", ""), successHandlerJson);	
+		successHandlers.put(new MethodReturnKey("hashmap", "application/json"), successHandlerJson);
+		
+		endpointResolver.setSuccessHandlers(successHandlers);
 		endpointResolver.setApplicationContext(applicationContext);
-		when(applicationContext.getBean("testResource1",TestResourceImpl.class)).thenReturn(resourceImp);
+		when(applicationContext.getBean("testCollection1",TestCollectionImpl.class)).thenReturn(resourceImp);
 	}
 
 	@Test
@@ -81,7 +94,44 @@ public class RestRouterServletTest {
 			servlet.handleRequest(request, response);
 		}
 	}
-	
+
+	@Test
+	public void testHandleStores() throws Exception {
+		RestRouterServlet servlet = new RestRouterServlet();
+		servlet.setPathPrefix("/sports-api");
+		servlet.setRestPackageRoot("com.doitnext.http.router.exampleclasses");
+		servlet.setEndpointResolver(endpointResolver);
+		servlet.setMethodInvoker(methodInvoker);
+		servlet.setErrorHandler(errorHandler);
+		servlet.setDynamicEndpointResolver(null);
+		servlet.afterPropertiesSet();
+		
+		MockHttpServletRequest request;
+		MockHttpServletResponse response;
+		
+		Object[][] testCases = {
+			{"GET", "/mocker", "/sports-api/teams/favorites/user01/path/to/resource",
+				"city=Atlanta", "application/json", null, null,
+				"user01", "path/to/resource"},
+		};
+		
+		for(Object[] testCase : testCases) {
+			request = new MockHttpServletRequest();
+			response = new MockHttpServletResponse();
+			setUpRequest(testCase, request);
+			servlet.handleRequest(request, response);
+			String content = response.getContentAsString();
+			System.out.println(content);
+			Assert.assertEquals(200,response.getStatus());
+			HashMap<String,String> t = new HashMap<String,String>();
+			@SuppressWarnings("unchecked")
+			Map<String,String> returnVal = objectMapper.readValue(content, t.getClass());
+			Assert.assertEquals(testCase[7], returnVal.get("userId"));
+			Assert.assertEquals(testCase[8], returnVal.get("storePath"));
+			
+		}
+	}
+
 	private void setUpRequest(Object[] testCase, MockHttpServletRequest request) {
 		String httpMethod = (String)testCase[0];
 		String pathPrefix = (String)testCase[1];
@@ -109,16 +159,6 @@ public class RestRouterServletTest {
 		if(mthd == HttpMethod.POST || mthd == HttpMethod.PUT ) {
 			
 		}
-	}
-	
-	private void initPojos() {
-		pojos.put("Cardinals-FOOTBALL",
-				new TestTeamPojo(TestTeamPojo.Type.FOOTBALL, "Cardinals"));
-		pojos.put("RedSox-BASEBALL",
-				new TestTeamPojo(TestTeamPojo.Type.BASEBALL, "RedSox"));
-		
-		pojos.get("Cardinals-FOOTBALL").setCity("Cincinatti");
-		pojos.get("RedSox-BASEBALL").setCity("Boston");
 	}
 	
 }

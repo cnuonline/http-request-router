@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
-import com.doitnext.http.router.exampleclasses.TestResourceImpl;
+import com.doitnext.http.router.exampleclasses.TestCollectionImpl;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
@@ -34,7 +34,7 @@ public class AcceptKeyTest {
 	MethodInvoker invoker = new DefaultInvoker();
 	ResponseHandler errorHandler = new DefaultErrorHandler();
 	ResponseHandler successHandler = new DefaultSuccessHandler();
-	TestResourceImpl implInstance = new TestResourceImpl();
+	TestCollectionImpl implInstance = new TestCollectionImpl();
 	PathTemplate pt;
 	PathTemplate pt2;
 	Method implMethod;
@@ -46,12 +46,12 @@ public class AcceptKeyTest {
 		PathTemplateParser parser = new PathTemplateParser("/", "?");
 		pt = parser.parse("/teams/baseball/players?pageSize=30&page=4");
 		pt2 = parser.parse("/teams/football/players");
-		implMethod = TestResourceImpl.class.getMethod("getTeam", String.class,
+		implMethod = TestCollectionImpl.class.getMethod("getTeam", String.class,
 				String.class, String.class);
 		path = pt.match("/teams/baseball/players");
 		route = new Route(HttpMethod.OPTIONS,
 				"T", "T", "application/JSON", "application/JSON", pt, 
-				TestResourceImpl.class, implMethod,
+				TestCollectionImpl.class, implMethod,
 				invoker, implInstance, successHandler, errorHandler);
 	}
 

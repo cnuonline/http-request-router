@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.junit.Assert;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
-import com.doitnext.http.router.exampleclasses.TestResourceImpl;
+import com.doitnext.http.router.exampleclasses.TestCollectionImpl;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
@@ -34,7 +34,7 @@ public class ContentTypeKeyTest {
 	MethodInvoker invoker = new DefaultInvoker();
 	ResponseHandler errorHandler = new DefaultErrorHandler();
 	ResponseHandler successHandler = new DefaultSuccessHandler();
-	TestResourceImpl implInstance = new TestResourceImpl();
+	TestCollectionImpl implInstance = new TestCollectionImpl();
 	PathTemplate pt;
 	PathTemplate pt2;
 	Method implMethod;
@@ -49,30 +49,30 @@ public class ContentTypeKeyTest {
 		PathTemplateParser parser = new PathTemplateParser("/", "?");
 		pt = parser.parse("/teams/baseball/players?pageSize=30&page=4");
 		pt2 = parser.parse("/teams/football/players");
-		implMethod = TestResourceImpl.class.getMethod("getTeam", String.class,
+		implMethod = TestCollectionImpl.class.getMethod("getTeam", String.class,
 				String.class, String.class);
 		path = pt.match("/teams/baseball/players");
 		route = new Route(HttpMethod.OPTIONS,
 				"http://fubar.schemas/baseball-team.xml",
 				"http://fubar.schemas/baseball-team.json", "application/xml",
-				"application/json", pt, TestResourceImpl.class, implMethod,
+				"application/json", pt, TestCollectionImpl.class, implMethod,
 				invoker, implInstance, successHandler, errorHandler);
 		routeWildcardFormat = new Route(HttpMethod.OPTIONS,
 				"http://fubar.schemas/baseball-team",
 				"http://fubar.schemas/baseball-team.json", "*/*",
-				"application/json", pt, TestResourceImpl.class, implMethod,
+				"application/json", pt, TestCollectionImpl.class, implMethod,
 				invoker, implInstance, successHandler, errorHandler);
 
 		routeNullFormat = new Route(HttpMethod.OPTIONS,
 				"http://fubar.schemas/baseball-team",
 				"http://fubar.schemas/baseball-team.json", null,
-				"application/json", pt, TestResourceImpl.class, implMethod,
+				"application/json", pt, TestCollectionImpl.class, implMethod,
 				invoker, implInstance, successHandler, errorHandler);
 
 		routeNullType = new Route(HttpMethod.OPTIONS,
 				null,
 				"http://fubar.schemas/baseball-team.json", "*/*",
-				"application/json", pt, TestResourceImpl.class, implMethod,
+				"application/json", pt, TestCollectionImpl.class, implMethod,
 				invoker, implInstance, successHandler, errorHandler);
 
 	}

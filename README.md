@@ -210,16 +210,16 @@ import my.project.root.package.mongo.repositories.MyResourceRepository;
 import com.doitnext.http.router.annotations.PathParameter;
 import com.doitnext.http.router.annotations.RequestBody;
 import com.doitnext.http.router.annotations.RestMethod;
-import com.doitnext.http.router.annotations.RestResource;
+import com.doitnext.http.router.annotations.RestCollection;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 
-//This @Service ... causes Spring to instantiate a myRestResource bean into the Spring application context  
+//This @Service ... causes Spring to instantiate a myRestCollection bean into the Spring application context  
 // as a singleton bean.
-@Service(value="myRestResource")
-// This @RestResource instructs DefaultEndpointResolver to look for an instance of the myRestResource bean
+@Service(value="myRestCollection")
+// This @RestCollection instructs DefaultEndpointResolver to look for an instance of the myRestCollection bean
 // in the application context to find the implementation instance.
-@RestResource(value="myRestResource", pathprefix = "/my-resource")
-public class MyRestResource {
+@RestCollection(value="myRestCollection", pathprefix = "/my-collection")
+public class MyRestCollection {
 	static ObjectMapper objectMapper = new ObjectMapper();
 
 	@Autowired

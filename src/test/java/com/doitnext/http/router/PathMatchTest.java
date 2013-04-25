@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
-import com.doitnext.http.router.exampleclasses.TestResourceImpl;
+import com.doitnext.http.router.exampleclasses.TestCollectionImpl;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
@@ -34,7 +34,7 @@ public class PathMatchTest {
 	MethodInvoker invoker = new DefaultInvoker();
 	ResponseHandler errorHandler = new DefaultErrorHandler();
 	ResponseHandler successHandler = new DefaultSuccessHandler();
-	TestResourceImpl implInstance = new TestResourceImpl();
+	TestCollectionImpl implInstance = new TestCollectionImpl();
 	PathTemplate pt;
 	PathTemplate pt2;
 	Method implMethod;
@@ -46,13 +46,13 @@ public class PathMatchTest {
 		PathTemplateParser parser = new PathTemplateParser("/", "?");
 		pt = parser.parse("/teams/baseball/players?pageSize=30&page=4");
 		pt2 = parser.parse("/teams/football/players");
-		implMethod = TestResourceImpl.class.getMethod("getTeam", String.class,
+		implMethod = TestCollectionImpl.class.getMethod("getTeam", String.class,
 				String.class, String.class);		
 		path = pt.match("/teams/baseball/players");
 		route = new Route(HttpMethod.OPTIONS,
 				"http://fubar.schemas/baseball-team.xml",
 				"http://fubar.schemas/baseball-team.json", "application/xml",
-				"application/json", pt, TestResourceImpl.class, implMethod,
+				"application/json", pt, TestCollectionImpl.class, implMethod,
 				invoker, implInstance, successHandler, errorHandler);
 
 	}
@@ -71,7 +71,7 @@ public class PathMatchTest {
 		StringBuilder sb = new StringBuilder("{\"PathMatch\": {\"route\":\"{OPTIONS: \"/teams/baseball/players\",");
 		sb.append(" ReturnFormat: \"application/json; ReturnType:\"http://fubar.schemas/baseball-team.json\",");
 		sb.append(" RequestFormat: \"application/xml\", RequestType: \"http://fubar.schemas/baseball-team.xml\"}");
-		sb.append(" --> [com.doitnext.http.router.exampleclasses.TestResourceImpl.getTeam(String, String, String)]\", ");
+		sb.append(" --> [com.doitnext.http.router.exampleclasses.TestCollectionImpl.getTeam(String, String, String)]\", ");
 		sb.append("matchedPath\":\"{\"Path\": {\"givenPath\":\"/teams/baseball/players\", terminus\":\"null}}");
 		Assert.assertEquals(sb.toString(), pmAsString);
 	}

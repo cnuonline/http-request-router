@@ -47,7 +47,7 @@ public class DefaultErrorHandlerTest {
 		boolean handled = h.handleResponse(null, null, response, responseData);
 		Assert.assertTrue(handled);
 		
-		String expectedContent = IOUtils.toString(this.getClass().getResourceAsStream("error1.txt"), "UTF-8");
+		String expectedContent = IOUtils.toString(this.getClass().getResourceAsStream("error1.dat"), "UTF-8");
 		Assert.assertEquals(expectedContent, response.getContentAsString());
 	}
 

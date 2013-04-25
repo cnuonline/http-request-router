@@ -16,7 +16,9 @@
 package com.doitnext.http.router.exampleclasses;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletRequest;
@@ -29,8 +31,8 @@ import org.slf4j.LoggerFactory;
 import com.doitnext.http.router.annotations.PathParameter;
 import com.doitnext.http.router.annotations.QueryParameter;
 import com.doitnext.http.router.annotations.RequestBody;
+import com.doitnext.http.router.annotations.RestCollection;
 import com.doitnext.http.router.annotations.RestMethod;
-import com.doitnext.http.router.annotations.RestResource;
 import com.doitnext.http.router.annotations.Terminus;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.exceptions.DuplicateKeyConstraintException;
@@ -40,15 +42,15 @@ import com.doitnext.http.router.exceptions.UnrecongizedKeyException;
  * @author Steve Owens (steve@doitnext.com)
  * 
  */
-@RestResource(value="testResource1", pathprefix = "/teams")
-public class TestResourceImpl {
-	private final static Logger logger = LoggerFactory.getLogger(TestResourceImpl.class);
+@RestCollection(value="testCollection1", pathprefix = "/teams")
+public class TestCollectionImpl {
+	private final static Logger logger = LoggerFactory.getLogger(TestCollectionImpl.class);
 	
 	private List<TestTeamPojo> teams = new ArrayList<TestTeamPojo>();
 	private String lastMethodCalled = null;
 	private String lastHttpMethodCalled = null;
 	
-	public TestResourceImpl() {
+	public TestCollectionImpl() {
 		// TODO Auto-generated constructor stub
 	}
 
@@ -210,5 +212,15 @@ public class TestResourceImpl {
 		lastMethodCalled = "unannotatedParameter";
 		lastHttpMethodCalled = "GET";
 	}
-
+	
+	@RestMethod(method = HttpMethod.GET, template = "/favorites/{userId:[0-9a-z]+:USERID}/{*:storePath}", returnType="hashmap")
+	public Map<String,String> getFavoritesForUser(@PathParameter(name="userId") String userId,
+			@PathParameter(name="storePath") String storePath) {
+		Map<String, String> result = new HashMap<String,String>();
+		result.put("userId", userId);
+		result.put("storePath", storePath);
+		lastMethodCalled = "getFavoritesForUser";
+		lastHttpMethodCalled = "GET";
+		return result;
+	}
 }

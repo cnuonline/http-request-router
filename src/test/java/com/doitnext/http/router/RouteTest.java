@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.doitnext.http.router.annotations.enums.HttpMethod;
-import com.doitnext.http.router.exampleclasses.TestResourceImpl;
+import com.doitnext.http.router.exampleclasses.TestCollectionImpl;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
@@ -33,7 +33,7 @@ public class RouteTest {
 	MethodInvoker invoker = new DefaultInvoker();
 	ResponseHandler errorHandler = new DefaultErrorHandler();
 	ResponseHandler successHandler = new DefaultSuccessHandler();
-	TestResourceImpl implInstance = new TestResourceImpl();
+	TestCollectionImpl implInstance = new TestCollectionImpl();
 	PathTemplate pt;
 	PathTemplate pt2;
 	Method implMethod;
@@ -43,7 +43,7 @@ public class RouteTest {
 		PathTemplateParser parser = new PathTemplateParser("/", "?");
 		pt = parser.parse("/teams/baseball/players?city=Atlanta");
 		pt2 = parser.parse("/teams/football/players");
-		implMethod = TestResourceImpl.class.getMethod("getTeam", String.class,
+		implMethod = TestCollectionImpl.class.getMethod("getTeam", String.class,
 				String.class, String.class);
 	}
 
@@ -52,12 +52,12 @@ public class RouteTest {
 		Route route = new Route(HttpMethod.OPTIONS,
 				"http://fubar.schemas/baseball-team.xml",
 				"http://fubar.schemas/baseball-team.json", "application/xml",
-				"application/json", pt, TestResourceImpl.class, implMethod,
+				"application/json", pt, TestCollectionImpl.class, implMethod,
 				invoker, implInstance, successHandler, errorHandler);
 		Assert.assertEquals(HttpMethod.OPTIONS, route.getHttpMethod());
 		Assert.assertEquals(implInstance, route.getImplInstance());
 		Assert.assertEquals(errorHandler, route.getErrorHandler());
-		Assert.assertEquals(TestResourceImpl.class, route.getImplClass());
+		Assert.assertEquals(TestCollectionImpl.class, route.getImplClass());
 		Assert.assertEquals(implMethod, route.getImplMethod());
 		Assert.assertEquals(invoker, route.getInvoker());
 		Assert.assertEquals(pt, route.getPathTemplate());
@@ -75,7 +75,7 @@ public class RouteTest {
 		Route route = new Route(HttpMethod.OPTIONS,
 				"http://fubar.schemas/baseball-team",
 				"http://fubar.schemas/baseball-team", "application/xml",
-				"application/json", pt, TestResourceImpl.class, implMethod,
+				"application/json", pt, TestCollectionImpl.class, implMethod,
 				invoker, implInstance, errorHandler, successHandler);
 
 		// Testcase layout
@@ -86,7 +86,7 @@ public class RouteTest {
 								"http://fubar.schemas/baseball-team",
 								"http://fubar.schemas/baseball-team",
 								"application/xml", "application/json", pt,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						0, 0 //
 				},//
@@ -94,7 +94,7 @@ public class RouteTest {
 						new Route(HttpMethod.OPTIONS,
 								"http://fubar.schemas/baseball-team",
 								"http://fubar.schemas/baseball-team", "gg/gg",
-								"application/json", pt, TestResourceImpl.class,
+								"application/json", pt, TestCollectionImpl.class,
 								implMethod, invoker, implInstance,
 								errorHandler, successHandler), //
 						-6, 6 //
@@ -103,7 +103,7 @@ public class RouteTest {
 						new Route(HttpMethod.OPTIONS,
 								"http://fubar.schemas/baseball-team",
 								"http://fubar.schemas/baseball-team", null,
-								"application/json", pt, TestResourceImpl.class,
+								"application/json", pt, TestCollectionImpl.class,
 								implMethod, invoker, implInstance,
 								errorHandler, successHandler), //
 						-1, 1 //
@@ -113,7 +113,7 @@ public class RouteTest {
 								"http://fubar.schemas/baseball-team",
 								"http://fubar.schemas/baseball-team",
 								"application/xml", "gg/gg", pt,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						-6, 6 //
 				},//
@@ -122,7 +122,7 @@ public class RouteTest {
 								"http://fubar.schemas/baseball-team",
 								"http://fubar.schemas/baseball-team",
 								"application/xml", null, pt,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						-1, 1 //
 				},//
@@ -130,7 +130,7 @@ public class RouteTest {
 						new Route(HttpMethod.OPTIONS,
 								"http://fubar.schemas/baseball-team",
 								"ggg/ggg", "application/xml",
-								"application/json", pt, TestResourceImpl.class,
+								"application/json", pt, TestCollectionImpl.class,
 								implMethod, invoker, implInstance,
 								errorHandler, successHandler), //
 						1, -1 //
@@ -139,7 +139,7 @@ public class RouteTest {
 						new Route(HttpMethod.OPTIONS,
 								"http://fubar.schemas/baseball-team", null,
 								"application/xml", "application/json", pt,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						-1, 1 //
 				}, //
@@ -147,7 +147,7 @@ public class RouteTest {
 						new Route(HttpMethod.OPTIONS, "ggg/ggg",
 								"http://fubar.schemas/baseball-team",
 								"application/xml", "application/json", pt,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						1, -1 //
 				}, //
@@ -155,7 +155,7 @@ public class RouteTest {
 						new Route(HttpMethod.OPTIONS, null,
 								"http://fubar.schemas/baseball-team",
 								"application/xml", "application/json", pt,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						-1, 1 //
 				}, //
@@ -164,7 +164,7 @@ public class RouteTest {
 								"http://fubar.schemas/baseball-team",
 								"http://fubar.schemas/baseball-team",
 								"application/xml", "application/json", null,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						-1, 1 //
 				}, //
@@ -173,7 +173,7 @@ public class RouteTest {
 								"http://fubar.schemas/baseball-team",
 								"http://fubar.schemas/baseball-team",
 								"application/xml", "application/json", pt2,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						-4, 4 //
 				}, //
@@ -181,7 +181,7 @@ public class RouteTest {
 						new Route(null, "http://fubar.schemas/baseball-team",
 								"http://fubar.schemas/baseball-team",
 								"application/xml", "application/json", pt,
-								TestResourceImpl.class, implMethod, invoker,
+								TestCollectionImpl.class, implMethod, invoker,
 								implInstance, errorHandler, successHandler), //
 						-1, 1 //
 				} //

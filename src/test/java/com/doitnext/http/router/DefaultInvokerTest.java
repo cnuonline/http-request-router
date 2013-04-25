@@ -25,11 +25,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
+
 import java.util.SortedSet;
 
 import javax.servlet.ServletException;
@@ -49,8 +49,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import com.doitnext.http.router.MethodInvoker.InvokeResult;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
-import com.doitnext.http.router.exampleclasses.TestResourceImpl;
+import com.doitnext.http.router.exampleclasses.TestCollectionImpl;
 import com.doitnext.http.router.exampleclasses.TestTeamPojo;
+import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.IdentifierTemplate;
 import com.doitnext.pathutils.LiteralTemplate;
@@ -82,9 +83,10 @@ public class DefaultInvokerTest {
 			"application/json" // Known
 	};
 
-	private TestResourceImpl testResourceImpl;
+	private TestCollectionImpl testCollectionImpl;
 	ResponseHandler errorHandlerJson = mock(ResponseHandler.class);
 	ResponseHandler successHandlerJson = mock(ResponseHandler.class);
+	ResponseHandler successHandlerJson2 = new DefaultSuccessHandler();
 	MethodInvoker invoker;
 	ObjectMapper mapper = new ObjectMapper();
 	List<PathMatch> happyCaseTestPathMatches = new ArrayList<PathMatch>();
@@ -130,11 +132,11 @@ public class DefaultInvokerTest {
 		DefaultEndpointResolver resolver = new DefaultEndpointResolver();
 		ApplicationContext applicationContext = mock(ApplicationContext.class);
 		resolver.setApplicationContext(applicationContext);
-		testResourceImpl = new TestResourceImpl();
+		testCollectionImpl = new TestCollectionImpl();
 
 		when(
-				applicationContext.getBean("testResource1",
-						TestResourceImpl.class)).thenReturn(testResourceImpl);
+				applicationContext.getBean("testCollection1",
+						TestCollectionImpl.class)).thenReturn(testCollectionImpl);
 
 		invoker = new DefaultInvoker();
 
@@ -148,6 +150,8 @@ public class DefaultInvokerTest {
 		successHandlers.put(new MethodReturnKey("", "application/json"),
 				successHandlerJson);
 		successHandlers.put(new MethodReturnKey("", ""), successHandlerJson);
+		
+		successHandlers.put(new MethodReturnKey("hashmap", "application/json"), successHandlerJson2);
 
 		resolver.setErrorHandlers(errorHandlers);
 		resolver.setSuccessHandlers(successHandlers);
@@ -253,6 +257,41 @@ public class DefaultInvokerTest {
 		HttpServletResponse resp = new MockHttpServletResponse();
 		executePathMatchTest(createPathMatchTestCaseId(pm),pm, req, resp);
 	}
+	
+	
+	@Test
+	public void testStoresCall() throws Exception {
+		Route route = routesByName.get("getFavoritesForUser");
+		Path path = route.getPathTemplate().match("/sports-api/teams/favorites/user1/a/b/c?query=String");
+		Assert.assertNotNull(path);
+		PathMatch pm = new PathMatch(route,path);
+		HttpMethod method = route.getHttpMethod();
+		MockHttpServletRequest req = (MockHttpServletRequest) createHappyMockRequest(method, pm);
+		req.setContentType("application/json; model=hashmap");
+		MockHttpServletResponse resp = new MockHttpServletResponse();
+		//executePathMatchTest(createPathMatchTestCaseId(pm),pm, req, resp);
+		String testCaseId = createPathMatchTestCaseId(pm);
+		HttpMethod httpmethod = pm.getRoute().getHttpMethod();
+		InvokeResult invokeresult = invoker.invokeMethod(httpmethod, pm, req, resp);
+		Assert.assertTrue(invokeresult.handled);
+		if (invokeresult.success) {
+			Assert.assertFalse(testCaseId, StringUtils
+					.isEmpty(testCollectionImpl.getLastHttpMethodCalled()));
+			HttpMethod methodCalled = HttpMethod.valueOf(testCollectionImpl
+					.getLastHttpMethodCalled());
+			Assert.assertEquals(testCaseId, pm.getRoute().getHttpMethod(),
+					methodCalled);
+			Assert.assertEquals(testCaseId, pm.getRoute().getImplMethod()
+					.getName(), testCollectionImpl.getLastMethodCalled());
+		} else {
+			verify(errorHandlerJson).handleResponse(eq(pm), eq(req),
+					eq(resp), any(Throwable.class));
+		}
+
+		String content = resp.getContentAsString();
+		Assert.assertEquals(200, resp.getStatus());
+		Assert.assertEquals("{\"storePath\":\"a/b/c\",\"userId\":\"user1\"}", content);
+	}
 
 	private String createPathMatchTestCaseId(PathMatch pm) {
 		return String.format("%s %s --> %s.%s", pm.getRoute().getHttpMethod().name(),
@@ -271,13 +310,13 @@ public class DefaultInvokerTest {
 		Assert.assertTrue(result.handled);
 		if (result.success) {
 			Assert.assertFalse(testCaseId, StringUtils
-					.isEmpty(testResourceImpl.getLastHttpMethodCalled()));
-			HttpMethod methodCalled = HttpMethod.valueOf(testResourceImpl
+					.isEmpty(testCollectionImpl.getLastHttpMethodCalled()));
+			HttpMethod methodCalled = HttpMethod.valueOf(testCollectionImpl
 					.getLastHttpMethodCalled());
 			Assert.assertEquals(testCaseId, pm.getRoute().getHttpMethod(),
 					methodCalled);
 			Assert.assertEquals(testCaseId, pm.getRoute().getImplMethod()
-					.getName(), testResourceImpl.getLastMethodCalled());
+					.getName(), testCollectionImpl.getLastMethodCalled());
 			verify(successHandlerJson).handleResponse(eq(pm), eq(req),
 					eq(resp), any(TestTeamPojo.class));
 		} else {
@@ -326,7 +365,7 @@ public class DefaultInvokerTest {
 			if (matcher instanceof LiteralTemplate) {
 				pb.append(matcher.getName());
 
-			} else {
+			} else if(matcher instanceof IdentifierTemplate){
 				IdentifierTemplate t = (IdentifierTemplate) matcher;
 				if (t.getName().equals("teamType")) {
 					pb.append(teamTypes[rnd.nextInt(teamTypes.length)]);
@@ -360,7 +399,7 @@ public class DefaultInvokerTest {
 		TestTeamPojo pojo = new TestTeamPojo(
 				TestTeamPojo.Type.values()[rnd.nextInt(TestTeamPojo.Type
 						.values().length)],
-				this.teamNames[rnd.nextInt(this.teamNames.length)]);
+				DefaultInvokerTest.teamNames[rnd.nextInt(DefaultInvokerTest.teamNames.length)]);
 		pojo.setCity(cities[rnd.nextInt(cities.length)]);
 		pojo.setLeague(leagues[rnd.nextInt(leagues.length)]);
 		return pojo;

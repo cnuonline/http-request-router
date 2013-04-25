@@ -36,7 +36,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import com.doitnext.http.router.annotations.RestMethod;
-import com.doitnext.http.router.annotations.RestResource;
+import com.doitnext.http.router.annotations.RestCollection;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
@@ -46,7 +46,7 @@ import com.doitnext.pathutils.PathTemplateParser;
 import com.google.common.collect.ImmutableSortedSet;
 
 /**
- * <p>Uses Reflections to locate @RestResource annotated classes to build routes
+ * <p>Uses Reflections to locate @RestCollection annotated classes to build routes
  * from to @RestMethod definitions. These {@link Route} objects are returned as an
  * Ordered Immutable set which can be used to map an HTTP request to a request 
  * handler implementation
@@ -115,7 +115,7 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 				basePackage));
 		Reflections reflections = new Reflections(basePackage);
 		Set<Class<?>> endpointSets = reflections
-				.getTypesAnnotatedWith(RestResource.class);
+				.getTypesAnnotatedWith(RestCollection.class);
 		for (Class<?> classz : endpointSets) {
 			addEndpointsToResult(pathPrefix, classz, result);
 		}
@@ -124,7 +124,7 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 
 	private void addEndpointsToResult(String pathPrefix, Class<?> classz,
 			TreeSet<Route> routes) {
-		RestResource resource = classz.getAnnotation(RestResource.class);
+		RestCollection resource = classz.getAnnotation(RestCollection.class);
 		StringBuilder pathBuilder = new StringBuilder(pathPrefix);
 		pathBuilder.append(resource.pathprefix());
 

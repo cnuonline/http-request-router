@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface RestResource {
+public @interface RestCollection {
 	/**
 	 * The identifies the bean name of this resource.  Bean instantiation is used
 	 * to instantiate the class annotated by this resource.
