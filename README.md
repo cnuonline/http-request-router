@@ -213,9 +213,13 @@ import com.doitnext.http.router.annotations.RestMethod;
 import com.doitnext.http.router.annotations.RestResource;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 
-@Service(value="MyResource")
-@RestResource(value="MyResource", pathprefix = "/my-resource")
-public class MyResource {
+//This @Service ... causes Spring to instantiate a myRestResource bean into the Spring application context  
+// as a singleton bean.
+@Service(value="myRestResource")
+// This @RestResource instructs DefaultEndpointResolver to look for an instance of the myRestResource bean
+// in the application context to find the implementation instance.
+@RestResource(value="myRestResource", pathprefix = "/my-resource")
+public class MyRestResource {
 	static ObjectMapper objectMapper = new ObjectMapper();
 
 	@Autowired
