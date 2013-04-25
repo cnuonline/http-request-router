@@ -183,6 +183,36 @@ with a parent resource.  The MyResource class enables basic CRUD operations with
 UI develpment using tools such as JSON Forms or Alpaca.js.
 
 ```java
+package my.project.root.package.service.resources;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.io.IOUtils;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import my.project.root.package.exceptions.InvalidModificationException;
+import my.project.root.package.exceptions.InvalidRelationshipException;
+import my.project.root.package.exceptions.ItemNotFoundException;
+import my.project.root.package.domain.MyParentResource;
+import my.project.root.package.domain.MyResource;
+import my.project.root.package.mongo.repositories.MyParentResourceRepository;
+import my.project.root.package.mongo.repositories.MyResourceRepository;
+
+import com.doitnext.http.router.annotations.PathParameter;
+import com.doitnext.http.router.annotations.RequestBody;
+import com.doitnext.http.router.annotations.RestMethod;
+import com.doitnext.http.router.annotations.RestResource;
+import com.doitnext.http.router.annotations.enums.HttpMethod;
+
 @Service(value="MyResource")
 @RestResource(value="MyResource", pathprefix = "/my-resource")
 public class MyResource {
