@@ -260,7 +260,7 @@ public class MyRestResource {
 	public void getResourceSchema(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		InputStream is = MyResource.class.getResourceAsStream("MyResource.schema.json");
 		byte[] bytes = IOUtils.toByteArray(is);
-		response.setContentType("application/json");
+		response.setContentType("application/json; model=json.schema");
 		response.setCharacterEncoding("UTF-8");
 		response.setContentLength(bytes.length);
 		response.setStatus(200);
