@@ -186,6 +186,30 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 			return do404(method, req, resp); // Resource not found
 		else if(logger.isTraceEnabled())
 			logger.trace(String.format("There are %d routes that match by uri path.", pathMatches.size()));
+		
+		
+		List<PathMatch> pathMatchesByPathAndMethod = new ArrayList<PathMatch>();
+		Set<HttpMethod> allowedMethods = new TreeSet<HttpMethod>();
+		for (PathMatch pm : pathMatches) {
+			if (pm.getRoute().getHttpMethod().equals(method)){
+				pathMatchesByPathAndMethod.add(pm);
+				if(logger.isTraceEnabled()) {
+					logger.trace(String.format("Http request method: %s matches route %s", method.name(), pm.getRoute()));
+				}
+			} else {
+				allowedMethods.add(pm.getRoute().getHttpMethod());
+				if(logger.isTraceEnabled()) {
+					logger.trace(String.format("Http request method: %s does not match route %s.  This route will be excluded from further consideration.", method.name(), pm.getRoute()));
+				}				
+			}
+		}
+		
+		if(pathMatchesByPathAndMethod.isEmpty()) {
+			List<String> am = new ArrayList<String>();
+			for (HttpMethod m : allowedMethods)
+				am.add(m.name());
+			return do405(method, am, req, resp);
+		}
 			
 		String acceptTypes = req.getHeader("Accept");
 		String accepts[] = acceptTypes.split(",");
@@ -194,7 +218,7 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 			acceptKeys.add(new AcceptKey(accept.trim()));
 		}
 		List<PathMatch> pathMatchesByResponseType = new ArrayList<PathMatch>();
-		for (PathMatch pm : pathMatches) {
+		for (PathMatch pm : pathMatchesByPathAndMethod) {
 			for (AcceptKey acceptKey : acceptKeys) {
 				if (acceptKey.matches(pm.getRoute())) {
 					pathMatchesByResponseType.add(pm);
@@ -231,31 +255,12 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 			logger.trace(String.format("There are %d routes that match by request type.", pathMatchesByContentType.size()));
 		}
 
-		List<PathMatch> pathMatchesFinalCandidates = new ArrayList<PathMatch>();
-		Set<HttpMethod> allowedMethods = new TreeSet<HttpMethod>();
-		for (PathMatch pm : pathMatchesByContentType) {
-			if (pm.getRoute().getHttpMethod().equals(method)){
-				pathMatchesFinalCandidates.add(pm);
-				if(logger.isTraceEnabled()) {
-					logger.trace(String.format("Http request method: %s matches route %s", method.name(), pm.getRoute()));
-				}
-			} else {
-				allowedMethods.add(pm.getRoute().getHttpMethod());
-				if(logger.isTraceEnabled()) {
-					logger.trace(String.format("Http request method: %s does not match route %s.  This route will be excluded from further consideration.", method.name(), pm.getRoute()));
-				}				
-			}
-		}
-		
-		if(pathMatchesFinalCandidates.isEmpty()) {
-			List<String> am = new ArrayList<String>();
-			for (HttpMethod m : allowedMethods)
-				am.add(m.name());
-			return do405(method, am, req, resp);
-		}
+		List<PathMatch> pathMatchesFinalCandidates = pathMatchesByContentType;
 		
 		if(logger.isTraceEnabled()){
-			logger.trace(String.format("There are %d routes that match by all criteria selecting most specific route.", pathMatchesFinalCandidates.size()));
+			logger.trace(String.format("There are %d routes that match by all criteria selecting most specific route. Final candidates:", pathMatchesFinalCandidates.size()));
+			for(PathMatch pm : pathMatchesFinalCandidates)
+				logger.trace(String.format("Final candidate: ", pm.getRoute()));
 		}
 		PathMatch selectedMatch = pathMatchesFinalCandidates.get(0);
 		for(PathMatch pm : pathMatchesFinalCandidates) {
