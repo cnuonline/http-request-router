@@ -16,6 +16,7 @@
 package com.doitnext.http.router.responsehandlers;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,6 +27,14 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import com.doitnext.http.router.PathMatch;
+import com.doitnext.http.router.Route;
+import com.doitnext.http.router.annotations.ExceptionHandler;
+import com.doitnext.http.router.annotations.OnException;
+import com.doitnext.http.router.annotations.enums.HttpMethod;
+import com.doitnext.pathutils.Path;
+import com.doitnext.pathutils.PathTemplate;
 /**
  * @author Steve Owens (steve@doitnext.com)
  *
@@ -73,6 +82,40 @@ public class DefaultErrorHandlerTest {
 		boolean handled = h.handleResponse(null, null, response, responseData);
 		Assert.assertFalse(handled);
 		logger.info("Awesome!! DefaultErrorHandler handled the exception appropriately.");
+	}
+	
+	@Test 
+	public void testHandleResponseWithExceptionHandlerAnnotation() throws Exception {
+		DefaultErrorHandler h = new DefaultErrorHandler();
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		
+		PathTemplate pt = null;
+		Path path = new Path("a/b/c", "nice=winds", pt);
+		Method method = this.getClass().getMethod("exceptionGeneratingMethod");
+		Route route = new Route(HttpMethod.GET,
+				null, null, null, "application/json", pt, this.getClass(), method, null, this, null, h);
+		PathMatch pm = new PathMatch(route, path);
+		
+		boolean handled = h.handleResponse(pm, null, response, new IllegalArgumentException());
+		Assert.assertTrue(handled);
+		Assert.assertEquals(409, response.getStatus());
+		
+		response.setStatus(0);
+		handled = h.handleResponse(pm, null, response, new IOException());
+		Assert.assertTrue(handled);
+		Assert.assertEquals(402, response.getStatus());
+		
+		response.setStatus(0);
+		handled = h.handleResponse(pm, null, response, new NullPointerException());
+		Assert.assertTrue(handled);
+		Assert.assertEquals(500, response.getStatus());
+		
+	}
+	
+	@ExceptionHandler({@OnException(exceptionClass = IOException.class, statusCode = 402),
+	                   @OnException(exceptionClass = IllegalArgumentException.class, statusCode = 409)})
+	public void exceptionGeneratingMethod() {
+		
 	}
 
 }

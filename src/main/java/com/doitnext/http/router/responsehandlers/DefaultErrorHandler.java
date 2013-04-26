@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.doitnext.http.router.PathMatch;
+import com.doitnext.http.router.annotations.ExceptionHandler;
+import com.doitnext.http.router.annotations.OnException;
 import com.doitnext.http.router.responseformatter.JacksonResponseFormatter;
 import com.google.common.collect.ImmutableList;
 
@@ -52,6 +54,20 @@ public class DefaultErrorHandler implements ResponseHandler {
 		return responseTypes;
 	}
 
+	private int mapErrorToResponseCode(PathMatch pm, Throwable t) {
+		if(pm != null && t != null) {
+			ExceptionHandler eh = pm.getRoute().getImplMethod().getAnnotation(ExceptionHandler.class);
+			if(eh != null){
+				for(OnException oe : eh.value()) {
+					if(oe.exceptionClass().isAssignableFrom(t.getClass()))
+						return oe.statusCode();
+				}
+				
+			}
+		}
+		return 500;
+	}
+	
 	@Override
 	public boolean handleResponse(PathMatch pathMatch,
 			HttpServletRequest request, HttpServletResponse response,
@@ -59,7 +75,7 @@ public class DefaultErrorHandler implements ResponseHandler {
 		try {
 			ErrorWrapper error = new ErrorWrapper((Throwable)responseData);
 			if(response.getStatus() < 400)
-				response.setStatus(500);
+				response.setStatus(mapErrorToResponseCode(pathMatch, (Throwable)responseData));
 			
 			/*TODO: This code could be improved quite a bit.  Ideally it should 
 			 * parse the request Accepts header and determine the allowed content encodings.
