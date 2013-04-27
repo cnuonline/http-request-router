@@ -190,22 +190,20 @@ public class DefaultInvoker implements MethodInvoker {
 				continue;
 			}
 			if(parameterAnnotations[x].length > 0) {
-				boolean bContinue = false;
 				for(int y = 0; y < parameterAnnotations[x].length; y++) {
 					Annotation annotation = parameterAnnotations[x][y];
 					if(annotation instanceof PathParameter) {
 						mapPathParameter((PathParameter)annotation, arguments, 
 								parameterTypes[x], variableMatches, x);
-						bContinue = true;
-						continue;
+						break;
 					} else if(annotation instanceof QueryParameter) {
 						mapQueryParameter((QueryParameter)annotation, arguments, 
 								parameterTypes[x], queryArgs, x);
-						bContinue = true;
-						continue;						
+						break;
 					} else if(annotation instanceof Terminus) {
 						if(parameterTypes[x].isAssignableFrom(String.class)) {
 							arguments[x] = terminus;
+							break;
 						} else {
 							throw new UnsupportedConversionException(String.class, parameterTypes[x]);
 						}
@@ -214,10 +212,9 @@ public class DefaultInvoker implements MethodInvoker {
 						Object argument = deserializer.deserialize(req.getInputStream(), parameterTypes[x],
 								pm.getRoute().getRequestType(), req.getCharacterEncoding());
 						arguments[x] = argument;
+						break;
 					}
 				}
-				if(bContinue)
-					continue;
 			}
 		}
 	}

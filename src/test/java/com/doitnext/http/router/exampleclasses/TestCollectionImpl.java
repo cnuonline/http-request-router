@@ -194,6 +194,15 @@ public class TestCollectionImpl {
 	public void badTerminusArg(@Terminus int x) {
 		throw new IllegalStateException("This method should never have been called.");
 	}
+	
+	@RestMethod(method = HttpMethod.GET, template = "/queryAndTerminus")
+	public void mixedTerminusArgs(@Terminus String terminus, @QueryParameter(name="item1") String item1) {
+		if(!StringUtils.isEmpty(item1) && StringUtils.isEmpty(terminus))
+			throw new IllegalStateException("Item1 is a query parameter but there seems to be no terminus.");
+		lastMethodCalled = "mixedTerminusArgs";
+		lastHttpMethodCalled = "GET";
+
+	}
 
 	@RestMethod(method = HttpMethod.GET, template = "/rawCall")
 	public void rawCall(HttpServletRequest req, HttpServletResponse resp) {

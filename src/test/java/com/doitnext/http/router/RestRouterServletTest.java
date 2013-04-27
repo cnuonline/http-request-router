@@ -84,7 +84,7 @@ public class RestRouterServletTest {
 			{"GET", "/mocker", "/teams","city=Atlanta", "application/json, application/xml", null, null},
 			{"POST", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", null, pojos.get("Cardinals-FOOTBALL")},
 			{"POST", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", "application/xml", pojos.get("Cardinals-FOOTBALL")},
-			{"POST", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", "application/json", pojos.get("Cardinals-FOOTBALL")},
+			{"POST", "/mocker", "/sports-api/teams","city=Atlanta", "application/json, application/xml", "application/json", pojos.get("Cardinals-FOOTBALL")}
 		};
 		
 		for(Object[] testCase : testCases) {
@@ -129,6 +129,31 @@ public class RestRouterServletTest {
 			Assert.assertEquals(testCase[7], returnVal.get("userId"));
 			Assert.assertEquals(testCase[8], returnVal.get("storePath"));
 			
+		}
+	}
+	
+	@Test
+	public void testHandlesTerminus() throws Exception {
+		RestRouterServlet servlet = new RestRouterServlet();
+		servlet.setPathPrefix("/sports-api");
+		servlet.setRestPackageRoot("com.doitnext.http.router.exampleclasses");
+		servlet.setEndpointResolver(endpointResolver);
+		servlet.setMethodInvoker(methodInvoker);
+		servlet.setErrorHandler(errorHandler);
+		servlet.setDynamicEndpointResolver(null);
+		servlet.afterPropertiesSet();
+		
+		MockHttpServletRequest request;
+		MockHttpServletResponse response;
+		Object[][] testCases = {
+				{"GET", "/mocker", "/sports-api/teams/queryAndTerminus?item1=foo&item2=bar", "item1=foo", "application/json", "application/xml", "application/json", null}
+		};
+		for(Object[] testCase : testCases) {
+			request = new MockHttpServletRequest();
+			response = new MockHttpServletResponse();
+			setUpRequest(testCase, request);
+			servlet.handleRequest(request, response);
+			Assert.assertEquals(200,response.getStatus());
 		}
 	}
 
