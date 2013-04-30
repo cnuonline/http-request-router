@@ -52,7 +52,7 @@ public class AcceptKeyTest {
 		route = new Route(HttpMethod.OPTIONS,
 				"T", "T", "application/JSON", "application/JSON", pt, 
 				TestCollectionImpl.class, implMethod,
-				invoker, implInstance, successHandler, errorHandler);
+				invoker, implInstance, successHandler, errorHandler, false);
 	}
 
 	@Test

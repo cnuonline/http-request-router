@@ -43,5 +43,5 @@ public interface DynamicEndpointResolver {
 	 * the {@link RestRouterServlet} invoking this method.
 	 * 
 	 */
-	void updateRoutes(RestRouterServlet servlet, ImmutableSortedSet<Route> knownRoutes); 
+	void updateRoutes(DynamicRouteConsumer servlet, ImmutableSortedSet<Route> knownRoutes); 
 }

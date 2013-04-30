@@ -201,7 +201,7 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 					rrCtx.requestType.resolve(), rrCtx.responseType.resolve(),
 					rrCtx.requestFormat.resolve(), rrCtx.responseFormat.resolve(),
 					pathTemplate, implClass, implMethod, invoker, implInstance,
-					successHandler, errorHandler);
+					successHandler, errorHandler, false);
 			if (routes.contains(route)) {
 				Route existingRoute = null;
 				for(Route r: routes) {

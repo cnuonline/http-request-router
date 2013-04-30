@@ -93,6 +93,7 @@ public class Route implements Comparable<Route> {
 	 */
 	final private ResponseHandler errorHandler;
 	
+	final private boolean dynamic;
 	
 	/**
 	 * @param httpMethod - The HTTP method associated with the route
@@ -112,7 +113,8 @@ public class Route implements Comparable<Route> {
 			String requestFormat, String returnFormat,
 			PathTemplate pathTemplate, Class<?> implClass, Method implMethod,
 			MethodInvoker invoker, Object implInstance,
-			ResponseHandler successHandler, ResponseHandler errorHandler) {
+			ResponseHandler successHandler, ResponseHandler errorHandler,
+			boolean dynamic) {
 		this.pathTemplate = pathTemplate;
 		this.implClass = implClass;
 		this.implMethod = implMethod;
@@ -125,6 +127,7 @@ public class Route implements Comparable<Route> {
 		this.implInstance = implInstance;
 		this.successHandler = successHandler;
 		this.errorHandler = errorHandler;
+		this.dynamic = dynamic;
 		// Ensure that pathTemplate is frozen thus making this class immutable
 		if(this.pathTemplate != null)
 			this.pathTemplate.freeze();

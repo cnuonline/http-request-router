@@ -53,7 +53,7 @@ public class PathMatchTest {
 				"http://fubar.schemas/baseball-team.xml",
 				"http://fubar.schemas/baseball-team.json", "application/xml",
 				"application/json", pt, TestCollectionImpl.class, implMethod,
-				invoker, implInstance, successHandler, errorHandler);
+				invoker, implInstance, successHandler, errorHandler, false);
 
 	}
 	@Test

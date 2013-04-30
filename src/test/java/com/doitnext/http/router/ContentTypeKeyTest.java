@@ -56,24 +56,24 @@ public class ContentTypeKeyTest {
 				"http://fubar.schemas/baseball-team.xml",
 				"http://fubar.schemas/baseball-team.json", "application/xml",
 				"application/json", pt, TestCollectionImpl.class, implMethod,
-				invoker, implInstance, successHandler, errorHandler);
+				invoker, implInstance, successHandler, errorHandler, false);
 		routeWildcardFormat = new Route(HttpMethod.OPTIONS,
 				"http://fubar.schemas/baseball-team",
 				"http://fubar.schemas/baseball-team.json", "*/*",
 				"application/json", pt, TestCollectionImpl.class, implMethod,
-				invoker, implInstance, successHandler, errorHandler);
+				invoker, implInstance, successHandler, errorHandler, false);
 
 		routeNullFormat = new Route(HttpMethod.OPTIONS,
 				"http://fubar.schemas/baseball-team",
 				"http://fubar.schemas/baseball-team.json", null,
 				"application/json", pt, TestCollectionImpl.class, implMethod,
-				invoker, implInstance, successHandler, errorHandler);
+				invoker, implInstance, successHandler, errorHandler, false);
 
 		routeNullType = new Route(HttpMethod.OPTIONS,
 				null,
 				"http://fubar.schemas/baseball-team.json", "*/*",
 				"application/json", pt, TestCollectionImpl.class, implMethod,
-				invoker, implInstance, successHandler, errorHandler);
+				invoker, implInstance, successHandler, errorHandler, false);
 
 	}
 

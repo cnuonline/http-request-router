@@ -93,7 +93,7 @@ public class DefaultErrorHandlerTest {
 		Path path = new Path("a/b/c", "nice=winds", pt);
 		Method method = this.getClass().getMethod("exceptionGeneratingMethod");
 		Route route = new Route(HttpMethod.GET,
-				null, null, null, "application/json", pt, this.getClass(), method, null, this, null, h);
+				null, null, null, "application/json", pt, this.getClass(), method, null, this, null, h, false);
 		PathMatch pm = new PathMatch(route, path);
 		
 		boolean handled = h.handleResponse(pm, null, response, new IllegalArgumentException());
