@@ -46,7 +46,7 @@ import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.Path;
 import com.google.common.collect.ImmutableSortedSet;
 
-public class RestRouterServlet implements HttpRequestHandler, InitializingBean, EndpointDumper {
+public class RestRouterServlet implements HttpRequestHandler, InitializingBean, EndpointDumper, DynamicRouteConsumer {
 
 	/**
 	 * Serial version id for this servlet
@@ -108,10 +108,8 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 		}
 	}
 
-	/**
-	 * This method is called in order to initiate a callback to the
-	 * {@link #dynamicEndpointResolver} implementation of
-	 * {@link DynamicEndpointResolver#updateRoutes(RestRouterServlet, TreeSet) 
+	/* (non-Javadoc)
+	 * @see com.doitnext.http.router.DynamicRouteConsumer#fireUpdateRoutes()
 	 */
 	public void fireUpdateRoutes() {
 		if (dynamicEndpointResolver != null) {
@@ -120,6 +118,9 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 			throw new IllegalStateException("No dynamicEndpointResolver set.");
 	}
 
+	/* (non-Javadoc)
+	 * @see com.doitnext.http.router.DynamicRouteConsumer#routesUpdated(com.google.common.collect.ImmutableSortedSet)
+	 */
 	public void routesUpdated(ImmutableSortedSet<Route> newRoutes) {
 		this.routes = newRoutes;
 	}
