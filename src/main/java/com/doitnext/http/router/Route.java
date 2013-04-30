@@ -93,6 +93,10 @@ public class Route implements Comparable<Route> {
 	 */
 	final private ResponseHandler errorHandler;
 	
+	/**
+	 * A boolean value indicating whether this route was created via Dynamic endpoint resolution.  If 
+	 * this is a static route then dynamic should be false.
+	 */
 	final private boolean dynamic;
 	
 	/**
@@ -108,6 +112,7 @@ public class Route implements Comparable<Route> {
 	 * @param implMethod - the handler method in the implementing class
 	 * @param successHandler - handles the method response on normal return.
 	 * @param errorHandler - handles the method response on exception.
+	 * @param dynamic - true if this is a route created by DynamicEndpointResolver else false.
 	 */
 	public Route(HttpMethod httpMethod, String requestType, String returnType, 
 			String requestFormat, String returnFormat,
@@ -224,6 +229,13 @@ public class Route implements Comparable<Route> {
 	 */
 	public ResponseHandler getErrorHandler() {
 		return errorHandler;
+	}
+
+	/**
+	 * @return the {@link #dynamic} property
+	 */
+	public boolean isDynamic() {
+		return dynamic;
 	}
 
 	private int compareNullableStrings(String thisVal, String thatVal) {
