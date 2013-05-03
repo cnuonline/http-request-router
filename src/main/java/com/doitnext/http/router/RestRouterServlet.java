@@ -231,6 +231,20 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 				}
 			}
 		}
+		// If a route exists with empty return type and the request has empty return
+		// type then remove routes that have non empty return types
+		for(AcceptKey key : acceptKeys) {
+			if(StringUtils.isEmpty(key.getReturnType())){
+				for(PathMatch pm : pathMatchesByResponseType){
+					if(pm.getRoute().getReturnFormat().equalsIgnoreCase(key.getReturnFormat())
+						&& !StringUtils.isEmpty(pm.getRoute().getReturnType())) {
+						pathMatchesByResponseType.remove(pm);
+						break;
+					}
+				}
+			}
+		}
+		
 		if (pathMatchesByResponseType.isEmpty())
 			return do406(method, req, resp);
 		else if(logger.isTraceEnabled())

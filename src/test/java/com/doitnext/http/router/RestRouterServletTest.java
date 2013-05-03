@@ -111,7 +111,7 @@ public class RestRouterServletTest {
 		
 		Object[][] testCases = {
 			{"GET", "/mocker", "/sports-api/teams/favorites/user01/path/to/resource",
-				"city=Atlanta", "application/json", null, null,
+				"city=Atlanta", "application/json; model=hashmap", null, null,
 				"user01", "path/to/resource"},
 		};
 		
