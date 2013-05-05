@@ -13,8 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.doitnext.http.router.annotations.enums;
+package com.doitnext.http.router.annotations;
 
-public enum HttpMethod {
-	DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE, EXTENDED
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * This annotation is used to supply documentation for the response body of RestMethod annotated routes.
+ * 
+ * @author Steve Owens (steve@doitnext.com)
+ *
+ */
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ResponseBodyDoc {
+	String value();
+	String className() default("");
 }

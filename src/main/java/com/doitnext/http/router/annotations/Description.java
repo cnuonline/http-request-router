@@ -13,8 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.doitnext.http.router.annotations.enums;
+package com.doitnext.http.router.annotations;
 
-public enum HttpMethod {
-	DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE, EXTENDED
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Allow descriptions to be applied to classes, methods, fields and parameters.
+ * @author Steve Owens (steve@doitnext.com)
+ *
+ */
+@Target({ElementType.METHOD, ElementType.TYPE, ElementType.PARAMETER, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Description {
+	public String value();
 }

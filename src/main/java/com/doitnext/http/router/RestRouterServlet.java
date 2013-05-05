@@ -98,6 +98,10 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 		this.errorHandler = errorHandler;
 	}
 	
+	public SortedSet<Route> getRoutes(){
+		return routes;
+	}
+	
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		routes = endpointResolver.resolveEndpoints(pathPrefix, restPackageRoot);

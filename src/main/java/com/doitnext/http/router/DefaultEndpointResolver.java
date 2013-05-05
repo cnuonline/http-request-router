@@ -174,6 +174,7 @@ public class DefaultEndpointResolver implements EndpointResolver, ApplicationCon
 		}
 	}
 
+	
 	private void addMethodToRoutes(String path, Object implInstance, RequestResponseContext rrCtx,
 			Method implMethod, Class<?> implClass, HttpMethod httpMethod,
 			TreeSet<Route> routes) {

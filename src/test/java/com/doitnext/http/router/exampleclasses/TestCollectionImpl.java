@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.doitnext.http.router.annotations.Description;
 import com.doitnext.http.router.annotations.PathParameter;
 import com.doitnext.http.router.annotations.QueryParameter;
 import com.doitnext.http.router.annotations.RequestBody;
@@ -88,7 +89,7 @@ public class TestCollectionImpl {
 
 	@RestMethod(method = HttpMethod.GET, template = "")
 	public List<TestTeamPojo> getTeams(
-			@QueryParameter(name = "teamType") String teamType,
+			@QueryParameter(name = "teamType") @Description("Identifies the team type.") String teamType,
 			@QueryParameter(name = "teamName") String teamName,
 			@QueryParameter(name = "city") String cities[]) {
 
@@ -142,9 +143,10 @@ public class TestCollectionImpl {
 	}
 
 	@RestMethod(method = HttpMethod.DELETE, template = "/{teamType:[A-Z]{1,10}:TEAMTYPE}/{teamName:[a-zA-Z+'\\-0-9]{2,30}:TEXT}")
+	@Description("Delete a team from the collection")
 	public boolean deleteTeam(
-			@PathParameter(name = "teamType") String teamType,
-			@PathParameter(name = "teamName") String teamName) {
+			@Description("The type of team (e.g. FOOTBALL, BASEBALL, etc)") @PathParameter(name = "teamType") String teamType,
+			@Description("Name of the team") @PathParameter(name = "teamName") String teamName) {
 		TestTeamPojo key = new TestTeamPojo(TestTeamPojo.Type.valueOf(teamType
 				.toUpperCase()), teamName);
 

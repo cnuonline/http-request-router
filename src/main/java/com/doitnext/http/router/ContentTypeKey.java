@@ -56,7 +56,7 @@ public class ContentTypeKey {
 	}
 
 	/**
-	 * @return the requestType
+	 * @return the responseType
 	 */
 	public String getRequestType() {
 		return requestType;
@@ -64,7 +64,7 @@ public class ContentTypeKey {
 
 	
 	/**
-	 * @return the requestFormat
+	 * @return the responseFormat
 	 */
 	public String getRequestFormat() {
 		return requestFormat;
@@ -123,8 +123,8 @@ public class ContentTypeKey {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("ContentTypeKey [requestType=").append(requestType)
-				.append(", requestFormat=").append(requestFormat).append("]");
+		builder.append("ContentTypeKey [responseType=").append(requestType)
+				.append(", responseFormat=").append(requestFormat).append("]");
 		return builder.toString();
 	}
 	

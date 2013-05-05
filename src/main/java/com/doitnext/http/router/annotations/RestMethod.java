@@ -44,17 +44,25 @@ public @interface RestMethod {
 	 */
 	String template();
 	/**
-	 * @return the HTTP method that this method handles (e.g. DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE)
+	 * @return the HTTP method that this method handles (e.g. DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE, or EXTENDED)
 	 */
 	HttpMethod method();
+	
+	/**
+	 * When the value of method is EXTENDED
+	 * @return the extended Http method use this argument to specify the HTTP extension method for example
+	 * if implementing a WEBDAV service the value of this argument might be MKCOL
+	 */
+	String extendedHttpMethod() default("");
+	
 	/**
 	 * @return
-	 * the requestType that applies to this method.
+	 * the responseType that applies to this method.
 	 * <p>The value of a request type should be the id of the schema which is used to 
 	 * resolve the object model of the object sent in the request.</p>
 	 * <p>For example given the http header:</p>
 	 * <code><nobr>Content-Type: application/json; model=http://schemas.mycompany.com/models/account</nobr></code>
-	 * <p>The requestType would be 'http://schemas.mycompany.com/models/account'</p>
+	 * <p>The responseType would be 'http://schemas.mycompany.com/models/account'</p>
 	 * <p>The default value is '' meaning no input model on request.</p>
 	 */
 	String requestType() default "";
@@ -69,12 +77,12 @@ public @interface RestMethod {
 	 */
 	String returnType() default "";
 	/**
-	 * @return the requestFormat that applies to this method.
+	 * @return the responseFormat that applies to this method.
 	 * <p>The value of a request format should be an "Content-type:" header value which is used to 
 	 * resolve unmarshalling strategy for object sent in the request.</p>
 	 * <p>For example given the http header:</p>
 	 * <code><nobr>Content-Type: application/json; model=http://schemas.mycompany.com/models/account</nobr></code>
-	 * <p>The requestFormat would be 'application/json'</p>
+	 * <p>The responseFormat would be 'application/json'</p>
 	 * <p>The default value is '' which pre-supposes requests with no body.</p>
 	 */
 	String requestFormat() default "";

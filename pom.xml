@@ -61,6 +61,11 @@
 	                    <year>${project.inceptionYear}</year>
 	                    <owner>${project.organization.name}</owner>
 	                    <url>${project.organization.url}</url>
+	                    <useDefaultExcludes>true</useDefaultExcludes>
+	                    <excludes>
+	                    	<exclude>*.dat</exclude>
+	                    	<exclude>INFOSTREAM.txt</exclude>
+	                    </excludes>
 	                </properties>
 	                <encoding>UTF-8</encoding>
 				</configuration>

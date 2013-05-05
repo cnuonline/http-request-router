@@ -17,6 +17,7 @@ package com.doitnext.http.router;
 
 import java.lang.reflect.Method;
 
+import com.doitnext.http.router.annotations.RestMethod;
 import com.doitnext.http.router.annotations.enums.HttpMethod;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.PathTemplate;
@@ -99,11 +100,13 @@ public class Route implements Comparable<Route> {
 	 */
 	final private boolean dynamic;
 	
+	final private String extendedHttpMethod;
+	
 	/**
 	 * @param httpMethod - The HTTP method associated with the route
-	 * @param requestType - the negotiated request type this type is given in the request Content-Type header
+	 * @param responseType - the negotiated request type this type is given in the request Content-Type header
 	 * @param returnType - the negotiated return type this type is given in the request Accept header
-	 * @param requestFormat - used to identify strategy for unmarshalling the request data
+	 * @param responseFormat - used to identify strategy for unmarshalling the request data
 	 * @param returnFormat - used to identify the strategy for marshalling the response data 
 	 * @param pathTemplate - the template used to match URI's to routes
 	 * @param implClass - the class that implements the handler method
@@ -136,6 +139,13 @@ public class Route implements Comparable<Route> {
 		// Ensure that pathTemplate is frozen thus making this class immutable
 		if(this.pathTemplate != null)
 			this.pathTemplate.freeze();
+		
+		if(httpMethod == HttpMethod.EXTENDED){
+			RestMethod rm = implMethod.getAnnotation(RestMethod.class);
+			extendedHttpMethod = rm.extendedHttpMethod();
+		} else
+			extendedHttpMethod = null;
+		
 	}
 
 	/**
@@ -147,7 +157,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the {@link #requestType}
+	 * @return the {@link #responseType}
 	 * @see #Route
 	 */
 	public String getRequestType() {
@@ -163,7 +173,7 @@ public class Route implements Comparable<Route> {
 	}
 
 	/**
-	 * @return the {@link #requestFormat}
+	 * @return the {@link #responseFormat}
 	 * @see #Route
 	 */
 	public String getRequestFormat() {
@@ -236,6 +246,14 @@ public class Route implements Comparable<Route> {
 	 */
 	public boolean isDynamic() {
 		return dynamic;
+	}
+
+	
+	/**
+	 * @return the extendedHttpMethod
+	 */
+	public String getExtendedHttpMethod() {
+		return extendedHttpMethod;
 	}
 
 	private int compareNullableStrings(String thisVal, String thatVal) {

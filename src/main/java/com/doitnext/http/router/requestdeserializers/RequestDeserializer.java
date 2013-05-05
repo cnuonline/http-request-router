@@ -58,7 +58,7 @@ public interface RequestDeserializer {
 	 * @param inputStream input stream containing the bytes to be read.
 	 * @param returnType this is the actual java class to be returned.  The return value will be assigned
 	 * to a method parameter and thus the object returned must be assignable to this class.
-	 * @param requestType this provides detail about the domain model being deserialized.  This parameter
+	 * @param responseType this provides detail about the domain model being deserialized.  This parameter
 	 * is only required for deserializers that care about the request type.
 	 * @param encoding 
 	 * 			this optional parameter provides detail about the character encoding of the 

@@ -15,12 +15,23 @@
  */
 package com.doitnext.http.router.annotations;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-
+/**
+ * Used to supply request body documentation for methods that may not have a
+ * RequestBody parameter.  If both RequestBody and this annotation are present on the
+ * same route, this annotation will override documentation generated from the RequestBody
+ * annotation.
+ * 
+ * @author Steve Owens (steve@doitnext.com)
+ *
+ */
+@Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface OnException {
-	public Class<? extends Throwable> exceptionClass();
-	public int statusCode();
+public @interface RequestBodyDoc {
+	String value();
+	String className() default("");
 }

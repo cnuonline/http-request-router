@@ -45,12 +45,12 @@ public @interface RestCollection {
 	String pathprefix();
 	/**
 	 * @return 
-	 * the requestType that applies to any method not explicitly annotated with a request type.
+	 * the responseType that applies to any method not explicitly annotated with a request type.
 	 * <p>The value of a request type should be the id of the schema which is used to 
 	 * resolve the object model of the object sent in the request.</p>
 	 * <p>For example given the http header:</p>
 	 * <code><nobr>Content-Type: application/json; model=http://schemas.mycompany.com/models/account</nobr></code>
-	 * <p>The requestType would be 'http://schemas.mycompany.com/models/account'</p>
+	 * <p>The responseType would be 'http://schemas.mycompany.com/models/account'</p>
 	 * 
 	 */
 	String requestType() default "";
@@ -64,12 +64,12 @@ public @interface RestCollection {
 	 */
 	String returnType() default "";
 	/** 
-	 * @return the requestFormat that applies to any method not explicitly annotated with a request type.
+	 * @return the responseFormat that applies to any method not explicitly annotated with a request type.
 	 * <p>The value of a request format should be an "Content-type:" header value which is used to 
 	 * resolve unmarshalling strategy for object sent in the request.</p>
 	 * <p>For example given the http header:</p>
 	 * <code><nobr>Content-Type: application/json; model=http://schemas.mycompany.com/models/account</nobr></code>
-	 * <p>The requestFormat would be 'application/json'</p>
+	 * <p>The responseFormat would be 'application/json'</p>
 	 */
 	String requestFormat() default "";
 	/**
