@@ -99,6 +99,10 @@ public class ContentTypeKey {
 			if(StringUtils.isEmpty(requestType))
 				return StringUtils.isEmpty(route.getRequestType());  
 			
+			// If route is a catch all route then return true
+			if(!StringUtils.isEmpty(route.getRequestType()) && route.getRequestType().equals("*/*"))
+				return true;
+			
 			// Client and route specify input models, make sure they match
 			return requestType.equalsIgnoreCase(route.getRequestType());
 		}

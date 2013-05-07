@@ -84,9 +84,16 @@ public final class AcceptKey {
 	}
 	
 	public boolean matches(String returnFormat, String returnType) {
+		// If route is a catch all route return true
+		if(!StringUtils.isEmpty(returnFormat) && !StringUtils.isEmpty(returnType)
+		 && returnFormat.equals("*/*") && returnType.equals("*/*")){
+			return true;
+		}
+
 		// If no accept header then no return is expected
 		if(StringUtils.isEmpty(this.returnFormat))
 			return (StringUtils.isEmpty(returnFormat)&&StringUtils.isEmpty(returnType));
+		
 		
 		//If request accepts any format check for model match
 		if(this.returnFormat.equals("*/*")) {

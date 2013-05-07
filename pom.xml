@@ -20,7 +20,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.doitnext</groupId>
 	<artifactId>http-request-router</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<name>Http Request Router</name>
 	<description>Generic request router that uses API config to route requests to an http-endpoint.</description>
 	<parent>
@@ -157,7 +157,7 @@
 		<dependency>
 			<groupId>com.doitnext</groupId>
 			<artifactId>path-utils</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
