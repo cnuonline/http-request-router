@@ -21,6 +21,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.stereotype.Component;
+
 /**
  * A Restful Resource implementation class.
  * 
@@ -30,6 +32,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@Component
 public @interface RestCollection {
 	/**
 	 * The identifies the bean name of this resource.  Bean instantiation is used
