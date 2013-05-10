@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
-
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
@@ -36,6 +34,9 @@ import com.doitnext.http.router.exampleclasses.TestTeamPojo;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class RestRouterServletTest {
 
@@ -63,6 +64,9 @@ public class RestRouterServletTest {
 		endpointResolver.setSuccessHandlers(successHandlers);
 		endpointResolver.setApplicationContext(applicationContext);
 		when(applicationContext.getBean("testCollection1",TestCollectionImpl.class)).thenReturn(resourceImp);
+		objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+		objectMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
+
 	}
 
 	@Test

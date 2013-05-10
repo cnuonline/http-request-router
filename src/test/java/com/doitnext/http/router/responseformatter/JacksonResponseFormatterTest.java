@@ -17,9 +17,12 @@ package com.doitnext.http.router.responseformatter;
 
 import java.util.Date;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class JacksonResponseFormatterTest {
 
@@ -77,20 +80,22 @@ public class JacksonResponseFormatterTest {
 	}
 	
 	private TestPojo testPojo;
-	
+	private ObjectMapper mapper = new ObjectMapper();
 	public JacksonResponseFormatterTest() {
 		testPojo = new TestPojo();
 		testPojo.strVal = "Happy";
 		testPojo.dateVal = new Date();
 		testPojo.longVal = 42l;
 		testPojo.boolVal = true;
+		mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+		mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
 	}
 	
 	@Test
 	public void testToString() throws Exception {
 		ResponseFormatter formatter = new JacksonResponseFormatter();
 		String json = formatter.formatResponse(testPojo, null, null);
-		ObjectMapper mapper = new ObjectMapper();
+		
 		TestPojo actual = mapper.readValue(json, TestPojo.class);
 		Assert.assertEquals(testPojo, actual);
 	}
@@ -99,7 +104,7 @@ public class JacksonResponseFormatterTest {
 	public void testToBytes() throws Exception {
 		ResponseFormatter formatter = new JacksonResponseFormatter();
 		byte json[] = formatter.formatResponseUtf8(testPojo, null, null);
-		ObjectMapper mapper = new ObjectMapper();
+		
 		TestPojo actual = mapper.readValue(json, TestPojo.class);
 		Assert.assertEquals(testPojo, actual);		
 	}

@@ -17,9 +17,12 @@ package com.doitnext.http.router.responseformatter;
 
 import java.net.URI;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Used to format an object into JSON a simple POJO.  This particular implementation
@@ -36,7 +39,8 @@ public class JacksonResponseFormatter implements ResponseFormatter {
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 	 
 	public JacksonResponseFormatter() {
-		
+		objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+		objectMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
 	}
 
 	@Override

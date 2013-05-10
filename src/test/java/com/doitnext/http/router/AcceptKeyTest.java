@@ -107,7 +107,7 @@ public class AcceptKeyTest {
 				{// 5
 				"*/*; model=G", "application/json", "G", true },//
 				{// 6
-				"application/json", "application/json", "T", true },//
+				"application/json", "application/json", "T", false },//
 				{// 7
 				"application/json; model=T", "application/json", "T", true },//
 				{// 8

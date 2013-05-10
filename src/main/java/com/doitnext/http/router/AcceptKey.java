@@ -106,7 +106,7 @@ public final class AcceptKey {
 		// If formats match check for model match
 		if(this.returnFormat.equalsIgnoreCase(returnFormat)) {
 			if(StringUtils.isEmpty(this.returnType))
-				return true; // Any model will do
+				return StringUtils.isEmpty(returnType); 
 			else
 				return this.returnType.equalsIgnoreCase(returnType);
 		}

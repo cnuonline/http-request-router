@@ -19,9 +19,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.codehaus.jackson.map.ObjectMapper;
-
 import com.doitnext.http.router.exceptions.DeserializationException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Steve Owens (steve@doitnext.com)
@@ -35,6 +35,7 @@ public class DefaultJsonDeserializer implements RequestDeserializer {
 	private String requestFormat = "application/json";
 	
 	public DefaultJsonDeserializer(){
+		objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
 	}
 	
 	@Override

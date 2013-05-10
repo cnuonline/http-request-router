@@ -28,7 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -44,6 +43,9 @@ import com.doitnext.http.router.exceptions.Http500Exception;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
 import com.doitnext.pathutils.Path;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableSortedSet;
 
 public class RestRouterServlet implements HttpRequestHandler, InitializingBean, EndpointDumper, DynamicRouteConsumer {
@@ -71,6 +73,8 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 	private ObjectMapper objectMapper = new ObjectMapper();
 	
 	public RestRouterServlet() {
+		objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+		objectMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
 	}
 
 	@Required

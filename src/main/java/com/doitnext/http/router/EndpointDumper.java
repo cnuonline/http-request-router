@@ -21,7 +21,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.codehaus.jackson.map.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 /**
  * Used to dump the endpoints in response to an endpoint dump request.

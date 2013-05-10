@@ -29,7 +29,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +45,9 @@ import com.doitnext.http.router.requestdeserializers.RequestDeserializer;
 import com.doitnext.http.router.typeconverters.StringConversionUtil;
 import com.doitnext.http.router.typeconverters.TypeConversionUtil;
 import com.doitnext.pathutils.PathElement;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * The default implementation for MethodInvoker.
@@ -56,6 +58,7 @@ import com.doitnext.pathutils.PathElement;
 public class DefaultInvoker implements MethodInvoker {
 	static Logger logger = LoggerFactory.getLogger(DefaultInvoker.class);
 	
+	private ObjectMapper objectMapper = new ObjectMapper();
 	
 	/**
 	 * Converts path and query parameters into method argument types.
@@ -69,6 +72,8 @@ public class DefaultInvoker implements MethodInvoker {
 	private List<RequestDeserializer> requestDeserializers = new ArrayList<RequestDeserializer>();
 	
 	public DefaultInvoker() {
+		objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+		objectMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
 		// Start off with the known serializers
 		requestDeserializers.add(new DefaultJsonDeserializer());
 	}
@@ -139,8 +144,7 @@ public class DefaultInvoker implements MethodInvoker {
 			}
 			Object invocationResult = implMethod.invoke(route.getImplInstance(), arguments);
 			if(logger.isTraceEnabled()) {
-				ObjectMapper mapper = new ObjectMapper();
-				logger.trace(String.format("Returned %s from %s", mapper.writeValueAsString(invocationResult),
+				logger.trace(String.format("Returned %s from %s", objectMapper.writeValueAsString(invocationResult),
 						route));
 			}
 			if(route.getSuccessHandler().handleResponse(pm, req, resp, invocationResult))

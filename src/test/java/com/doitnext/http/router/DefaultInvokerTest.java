@@ -25,11 +25,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
 import java.util.SortedSet;
 
 import javax.servlet.ServletException;
@@ -37,9 +35,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,6 +52,11 @@ import com.doitnext.pathutils.IdentifierTemplate;
 import com.doitnext.pathutils.LiteralTemplate;
 import com.doitnext.pathutils.Path;
 import com.doitnext.pathutils.PathElementTemplate;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class DefaultInvokerTest {
 	static Random rnd = new Random();
@@ -129,6 +129,9 @@ public class DefaultInvokerTest {
 
 	@Before
 	public void init() throws Exception {
+		mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+		mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
+
 		DefaultEndpointResolver resolver = new DefaultEndpointResolver();
 		ApplicationContext applicationContext = mock(ApplicationContext.class);
 		resolver.setApplicationContext(applicationContext);

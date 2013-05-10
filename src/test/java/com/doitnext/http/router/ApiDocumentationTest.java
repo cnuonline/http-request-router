@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.SortedSet;
 
 import org.apache.commons.io.IOUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +33,9 @@ import com.doitnext.http.router.exampleclasses.TestCollectionImpl;
 import com.doitnext.http.router.responsehandlers.DefaultErrorHandler;
 import com.doitnext.http.router.responsehandlers.DefaultSuccessHandler;
 import com.doitnext.http.router.responsehandlers.ResponseHandler;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class ApiDocumentationTest {
 	private TestCollectionImpl resourceImp = new TestCollectionImpl();
@@ -42,9 +44,12 @@ public class ApiDocumentationTest {
 	private MethodInvoker methodInvoker = new DefaultInvoker();
 	private ResponseHandler errorHandler = new DefaultErrorHandler();
 	private RestRouterServlet servlet;
-	
+	private ObjectMapper objectMapper = new ObjectMapper();
 	@Before
 	public void init() throws Exception {
+		objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+		objectMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
+
 		Map<MethodReturnKey, ResponseHandler> successHandlers = new HashMap<MethodReturnKey, ResponseHandler>();
 		ResponseHandler successHandlerJson = new DefaultSuccessHandler();
 		successHandlers.put(new MethodReturnKey("", "application/json"),
@@ -69,8 +74,7 @@ public class ApiDocumentationTest {
 	public void testDocumentor() throws Exception {
 		SortedSet<Route> routes = servlet.getRoutes();
 		ApiDocumentation docs = new ApiDocumentation("Test API", "Used to test features of Rest Router Servlet", routes);
-		ObjectMapper mapper = new ObjectMapper();
-		String docsAsString = mapper.writeValueAsString(docs);
+		String docsAsString = objectMapper.writeValueAsString(docs);
 		System.out.println(docsAsString);
 		InputStream is = this.getClass().getResourceAsStream("expectedApiDocumentationValue.dat");
 		String expected = IOUtils.toString(is, "UTF-8");
