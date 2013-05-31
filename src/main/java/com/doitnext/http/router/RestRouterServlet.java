@@ -228,24 +228,30 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 		}
 		List<PathMatch> pathMatchesByResponseType = new ArrayList<PathMatch>();
 		for (PathMatch pm : pathMatchesByPathAndMethod) {
-			for (AcceptKey acceptKey : acceptKeys) {
-				if (acceptKey.matches(pm.getRoute())) {
-					pathMatchesByResponseType.add(pm);
-					if(logger.isTraceEnabled()) {
-						logger.trace(String.format("Accept key: %s matches route %s", acceptKey, pm.getRoute()));
+			// If this is a wildcard return method just add it 
+			if(pm.getRoute().isWildcardReturn()){
+				pathMatchesByResponseType.add(pm);
+			} else {
+				for (AcceptKey acceptKey : acceptKeys) {
+					if (acceptKey.matches(pm.getRoute())) {
+						pathMatchesByResponseType.add(pm);
+						if(logger.isTraceEnabled()) {
+							logger.trace(String.format("Accept key: %s matches route %s", acceptKey, pm.getRoute()));
+						}
+					} else if(logger.isTraceEnabled()) {
+						logger.trace(String.format("Accept key: %s does not match route %s.  This route will be excluded from further consideration.", acceptKey, pm.getRoute()));
 					}
-				} else if(logger.isTraceEnabled()) {
-					logger.trace(String.format("Accept key: %s does not match route %s.  This route will be excluded from further consideration.", acceptKey, pm.getRoute()));
 				}
 			}
 		}
 		// If a route exists with empty return type and the request has empty return
-		// type then remove routes that have non empty return types
+		// type then remove routes that have non empty return types (except for wildcard returns)
 		for(AcceptKey key : acceptKeys) {
 			if(StringUtils.isEmpty(key.getReturnType())){
 				for(PathMatch pm : pathMatchesByResponseType){
 					if(pm.getRoute().getReturnFormat().equalsIgnoreCase(key.getReturnFormat())
-						&& !StringUtils.isEmpty(pm.getRoute().getReturnType())) {
+						&& !StringUtils.isEmpty(pm.getRoute().getReturnType())
+						&& !pm.getRoute().isWildcardReturn()) {
 						pathMatchesByResponseType.remove(pm);
 						break;
 					}
@@ -263,7 +269,9 @@ public class RestRouterServlet implements HttpRequestHandler, InitializingBean, 
 		ContentTypeKey contentTypeKey = new ContentTypeKey(contentTypeHeader);
 		for (PathMatch pm : pathMatchesByResponseType) {
 			Route route = pm.getRoute();
-			if (contentTypeKey.matches(route)){
+			if(route.isWildcardConsumer())
+				pathMatchesByContentType.add(pm);
+			else if (contentTypeKey.matches(route)){
 				pathMatchesByContentType.add(pm);
 				if(logger.isTraceEnabled()) {
 					logger.trace(String.format("Content type key: %s matches route %s", contentTypeKey, pm.getRoute()));

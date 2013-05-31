@@ -148,6 +148,14 @@ public class Route implements Comparable<Route> {
 		
 	}
 
+	public boolean isWildcardReturn() {
+		return ("*/*".equals(returnFormat) && "*/*".equals(returnType));
+	}
+	
+	public boolean isWildcardConsumer() {
+		return ("*/*".equals(requestFormat) && "*/*".equals(requestType));
+	}
+	
 	/**
 	 * @return the {@link #httpMethod}
 	 * @see #Route
