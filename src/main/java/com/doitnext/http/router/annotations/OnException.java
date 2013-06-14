@@ -23,4 +23,5 @@ import java.lang.annotation.RetentionPolicy;
 public @interface OnException {
 	public Class<? extends Throwable> exceptionClass();
 	public int statusCode();
+	public String errorCode() default "UNEXPECTED_ERROR";
 }

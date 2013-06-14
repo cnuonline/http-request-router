@@ -54,18 +54,18 @@ public class DefaultErrorHandler implements ResponseHandler {
 		return responseTypes;
 	}
 
-	private int mapErrorToResponseCode(PathMatch pm, Throwable t) {
+	private OnException mapErrorToResponseCode(PathMatch pm, Throwable t) {
 		if(pm != null && t != null) {
 			ExceptionHandler eh = pm.getRoute().getImplMethod().getAnnotation(ExceptionHandler.class);
 			if(eh != null){
 				for(OnException oe : eh.value()) {
 					if(oe.exceptionClass().isAssignableFrom(t.getClass()))
-						return oe.statusCode();
+						return oe;
 				}
 				
 			}
 		}
-		return 500;
+		return null;
 	}
 	
 	@Override
@@ -73,9 +73,17 @@ public class DefaultErrorHandler implements ResponseHandler {
 			HttpServletRequest request, HttpServletResponse response,
 			Object responseData) {
 		try {
-			ErrorWrapper error = new ErrorWrapper((Throwable)responseData);
-			if(response.getStatus() < 400)
-				response.setStatus(mapErrorToResponseCode(pathMatch, (Throwable)responseData));
+			OnException oe = null;
+			if(response.getStatus() < 400) {
+				oe = mapErrorToResponseCode(pathMatch, (Throwable)responseData);
+				if(oe != null){
+					response.setStatus(oe.statusCode());
+				} else {
+					response.setStatus(500);
+				}
+			}
+			ErrorWrapper error = new ErrorWrapper((Throwable)responseData, oe);
+			
 			
 			/*TODO: This code could be improved quite a bit.  Ideally it should 
 			 * parse the request Accepts header and determine the allowed content encodings.
@@ -99,7 +107,16 @@ public class DefaultErrorHandler implements ResponseHandler {
 	
 	public  static class ErrorWrapper {
 		public final List<String> errorMessages = new ArrayList<String>();
-		ErrorWrapper(Throwable t) {
+		public final String errorType;
+		public final String errorCode;
+		ErrorWrapper(Throwable t, OnException oe) {
+			if(oe != null) {
+				errorType = oe.exceptionClass().getSimpleName();
+				errorCode = oe.errorCode();
+			} else { 
+				errorType = t.getClass().getSimpleName();
+				errorCode = null;
+			}
 			errorMessages.add(String.format("%s: %s", t.getClass().getName(), t.getMessage()));
 			Throwable cause = t.getCause();
 			while(cause != null) {
