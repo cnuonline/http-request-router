@@ -111,13 +111,13 @@ public class DefaultErrorHandler implements ResponseHandler {
 		public final String errorCode;
 		ErrorWrapper(Throwable t, OnException oe) {
 			if(oe != null) {
-				errorType = oe.exceptionClass().getSimpleName();
+				errorType = oe.exceptionClass().getName();
 				errorCode = oe.errorCode();
 			} else { 
-				errorType = t.getClass().getSimpleName();
+				errorType = t.getClass().getName();
 				errorCode = null;
 			}
-			errorMessages.add(String.format("%s: %s", t.getClass().getName(), t.getMessage()));
+			errorMessages.add(String.format("%s", t.getMessage()));
 			Throwable cause = t.getCause();
 			while(cause != null) {
 				errorMessages.add(String.format("%s: %s", cause.getClass().getName(), cause.getMessage()));
