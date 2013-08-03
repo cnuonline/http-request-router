@@ -22,7 +22,11 @@
 	<artifactId>http-request-router</artifactId>
 	<version>1.0.1-SNAPSHOT</version>
 	<name>Http Request Router</name>
-	<description>Generic request router that uses API config to route requests to an http-endpoint.</description>
+	<description>Generic request router that uses improved java annotations to route requests.  
+	This framework differs from Spring MVC and JaxRS in that it expresses the collection and store Rest Archetypes 
+	in an intuitive manner.  Endpoint path templates incorporate regular expressions for path variables and the routing
+	framework can disambiguate non intersecting identities.  It also includes annotations that enable the generation
+	of complete JSON based documentation of the API you create using this framework.</description>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
@@ -157,7 +161,7 @@
 		<dependency>
 			<groupId>com.doitnext</groupId>
 			<artifactId>path-utils</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
