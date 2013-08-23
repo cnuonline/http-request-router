@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.doitnext.http.router.PathMatch;
 import com.doitnext.http.router.annotations.ExceptionHandler;
 import com.doitnext.http.router.annotations.OnException;
+import com.doitnext.http.router.exceptions.FieldValidationException;
 import com.doitnext.http.router.responseformatter.JacksonResponseFormatter;
 import com.google.common.collect.ImmutableList;
 
@@ -109,6 +110,7 @@ public class DefaultErrorHandler implements ResponseHandler {
 		public final List<String> errorMessages = new ArrayList<String>();
 		public final String errorType;
 		public final String errorCode;
+		public final String implicatedFields[];
 		ErrorWrapper(Throwable t, OnException oe) {
 			if(oe != null) {
 				errorType = oe.exceptionClass().getName();
@@ -117,6 +119,10 @@ public class DefaultErrorHandler implements ResponseHandler {
 				errorType = t.getClass().getName();
 				errorCode = null;
 			}
+			if(t instanceof FieldValidationException){
+				implicatedFields = ((FieldValidationException)t).getImplicatedFields();
+			} else 
+				implicatedFields = new String[] {};
 			errorMessages.add(String.format("%s", t.getMessage()));
 			Throwable cause = t.getCause();
 			while(cause != null) {
