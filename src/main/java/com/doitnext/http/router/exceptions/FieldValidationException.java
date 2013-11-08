@@ -8,6 +8,8 @@ public class FieldValidationException extends IllegalArgumentException {
 	private static final long serialVersionUID = 8859343360579774436L;
 	private final String implicatedFields[];
 	
+	public static final String errorCode = "BAD_INPUT_IN_REQUEST";
+	
 	public FieldValidationException(String implicatedFields[]) {
 		super();
 		this.implicatedFields = implicatedFields;
